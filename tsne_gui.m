@@ -401,6 +401,7 @@ set(gcf,'WindowButtonUpFcn', @mouseRelease)
                 close(clustering_bar);
                 tcourse_fig=plot_cluster_t_course(image_times,tsne_data.cluster_signals,...
                     odor_seq,aligned_red_img,tsne_data.labels);
+                msgbox('Segmentation Success!');
             else
                 warndlg(sprintf('Run t-SNE or import data before running clustering'));
             end
@@ -453,6 +454,7 @@ set(gcf,'WindowButtonUpFcn', @mouseRelease)
                 run_pca;
                 display_movie;
                 close(waiting);
+                msgbox('Movie Imported Successfully!');
             end
         end
     end
