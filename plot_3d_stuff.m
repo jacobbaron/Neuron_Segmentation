@@ -3,6 +3,9 @@ red_img_avg=max(red_img_stack,[],4);
 red_img_max=squeeze(max(red_img_stack,[],3));
 %Idx is list of clusters to plot
 num_disp_clusters=length(Idx);
+if ~exist('col','var')
+    col=generate_cmap(length(unique(label(:)>1)));
+end
 for ii=1:num_disp_clusters
     hpatch(ii)=patch(isosurface(label.*(label==Idx(ii)),0));
     isonormals(label.*(label==Idx(ii)),hpatch(ii));
@@ -31,6 +34,7 @@ end
     max_cdata=max(im.CData(:));
     im.CData=(im.CData-min_cdata)*150/max_cdata;
     alpha(im,.8);
+    hold off;
 %     figure
 %     for  ii=1:num_disp_clusters
 %         subplot(num_disp_clusters,1,ii)

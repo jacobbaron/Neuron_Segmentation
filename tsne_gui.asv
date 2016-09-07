@@ -77,12 +77,6 @@ foreground_title=title(ax_foreground,'Import a movie to begin');
 larva_side_label=uicontrol('Style', 'text',...
     'Position', [ax_f_Pos(1),ax_f_Pos(2)+ax_f_Pos(4)+10,80,20],...
                  'FontSize', 14);
-larva_ML_label_left=uicontrol('Style', 'text',...
-    'Position', [ax_f_Pos(1)-20,ax_f_Pos(2)+ax_f_Pos(4)/2+40,40,20],...
-                 'FontSize', 14);
-larva_ML_label_right=uicontrol('Style', 'text',...
-    'Position', [ax_f_Pos(1)+ax_f_Pos(3)+20,ax_f_Pos(2)+ax_f_Pos(4)/2+40,40,20],...
-                 'FontSize', 14);
 f.Units='pixels';
 FigPos = f.Position;
 
@@ -851,13 +845,7 @@ plot_btn=uicontrol(...
              ztxthand.String='2D image';
         end
         if ~isempty(larva_side)
-           if strcmp(larva_side(2),'Left')
-               larva_ML_label_left.String='L';
-               larva_ML_label_right.String='M';
-           else
-               larva_ML_label_left.String='M';
-               larva_ML_label_right.String='L';
-           end
+           if strcmp(larva_side(2),'Left'
         end
     end
     function get_ROI(varargin)

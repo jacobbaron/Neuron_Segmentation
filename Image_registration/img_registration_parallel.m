@@ -13,13 +13,14 @@ aligned_green_img(:,:,:,1)=green_img(:,:,:,1);
 fprintf('parallel starting...\n');
 pyramidlevel=floor(log2(size(img_reg,3)))-1;
 tic
-parfor ii=2:size(img_reg,4)
+for ii=2:size(img_reg,4)
     optimizer = registration.optimizer.RegularStepGradientDescent; % here you can modify the default properties of the optimizer to suit your need/to adjust the parameters of registration.
 
     [optimizer, metric]  = imregconfig('monomodal'); % for optical microscopy you need the 'monomodal' configuration.
     optimizer.RelaxationFactor=0.8;
-    optimizer.MinimumStepLength=1e-6;
+    optimizer.MinimumStepLength=1e-5;
     optimizer.MaximumStepLength = MaxStepLength_init;
+    optimizer.MaximumIterations=1000;
     moving=img_reg(:,:,:,ii);
    lastwarn('');
    
@@ -29,7 +30,7 @@ parfor ii=2:size(img_reg,4)
     while strcmp(lastwarning,'images:regmex:registrationOutBoundsTermination')
        lastwarn(''); 
        optimizer.MaximumStepLength = optimizer.MaximumStepLength/2;
-       tform = imregtform(moving,fixed,'rigid',...
+       tform = imregtform(moving,fixed,'translation',...
         optimizer,metric,'DisplayOptimization',false,'PyramidLevels',pyramidlevel);
        [~,lastwarning]=lastwarn;
     end

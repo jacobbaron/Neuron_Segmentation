@@ -22,7 +22,7 @@ fixed=img_reg_maxinten(:,:,1);
 
 
 tic
-parfor ii=2:size(img_reg_maxinten,3)
+for ii=2:size(img_reg_maxinten,3)
     optimizer = registration.optimizer.RegularStepGradientDescent; % here you can modify the default properties of the optimizer to suit your need/to adjust the parameters of registration.
 
     [optimizer, metric]  = imregconfig('monomodal'); % for optical microscopy you need the 'monomodal' configuration.

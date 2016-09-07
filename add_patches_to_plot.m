@@ -1,9 +1,11 @@
 function [patches]=add_patches_to_plot(t,odor_seq,ax,add_legend)
+    load('odor_inf.mat')
+    %global odor_concentration_list odor_list odor_colormap
+    odor_starts=[find(abs(diff(odor_seq))>0)+1];
+    odor_ends=[odor_starts(2:end);length(odor_seq)];
+    odor_ends=odor_ends(odor_seq(odor_starts)~=0);
+    odor_starts=odor_starts(odor_seq(odor_starts)~=0);
     
-    load odor_inf.mat;
-    odor_starts=find(diff([0;odor_seq])>0);
-    odor_ends=find(diff([0;odor_seq;0])<0);
-    odor_ends(odor_ends>length(odor_seq))=length(odor_seq);
     odor_orders=odor_list(floor(odor_seq(odor_starts)/length(odor_concentration_list))+1);
     conc_orders=odor_concentration_list(rem(odor_seq(odor_starts),length(odor_concentration_list)));
     odor_info=cellfun(@(x,y)sprintf('%s %s',y,x),odor_orders,conc_orders,...

@@ -29,28 +29,18 @@ group_clusters=lsbdc_elki(tsne_preclustered,k,alpha)+1;
 clusters=group_clusters(groups);
 
 num_clusters=length(unique(clusters));
+unique_clusters=unique(clusters);
 waitbar(70,clustering_bar,sprintf('Found %d clusters!',num_clusters))
 
+%grey for noise (labels==1), colormap for others
+cmap=generate_cmap(length(unique_clusters(unique_clusters>1)));
 
-load('neuron_seg_colormap.mat','n_seg_cmap');
-cmap_idx=round(linspace(1,size(n_seg_cmap,1),num_clusters-1));
-cmap=flipud([n_seg_cmap(cmap_idx,:);.7,.7,.7;1,1,1]);
-unique_clusters=unique(clusters);
+
 labels=zeros(size(foreground));
 labels(foreground_list)=clusters;
-
-cluster_signals=cell(length(unique_clusters),1);
-waitbar(0,clustering_bar,'Calculating signals...')
-for ii=1:length(cluster_signals)
-    
-   cluster_signals{ii}=calculate_label_signal(img_stack,...
-       foreground,labels,unique_clusters(ii));
-    waitbar(ii/length(cluster_signals),clustering_bar);
-end
-nm_signals = nm_signal(cluster_signals, odor_sequence );
 tsne_data.clustering_output=group_clusters;
 tsne_data.cmap=cmap;
 tsne_data.labels=labels;
-tsne_data.cluster_signals=cluster_signals;
-tsne_data.nm_signals=nm_signals;
 close(clustering_bar);
+tsne_data=calculate_cluster_signals(tsne_data,img_stack,odor_sequence);
+
