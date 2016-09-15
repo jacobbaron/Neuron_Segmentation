@@ -1,5 +1,5 @@
 function [neuronsListDay,nmPeakSigDay,nmSigDay,neuronCoMDay,neuronVarDay,...
-    tCourseNeuron]=load_sig_from_day()
+    tCourseNeuron,neuronFireDay]=load_sig_from_day()
 
 data_files=dir('*_tsne_data.mat');
 load odor_inf.mat;
@@ -15,6 +15,7 @@ neuronsListDay=[];
 nmPeakSigDay=[];
 neuronCoMDay=[];
 neuronVarDay=[];
+neuronFireDay=[];
 nmSigDay={};
 tCourseNeuron.t={};
 tCourseNeuron.sig={};
@@ -35,14 +36,15 @@ for ii=1:length(data_files)
     dotidx=strfind(data_files(ii).name,'.nd2')-1;
     animal=floor(str2double(data_files(ii).name(runidx:dotidx))/100);
     expt=rem(str2double(data_files(ii).name(runidx:dotidx)),animal*100);
-    nm_peak_sig=nan(length(odor_concentration_list),length(odor_list),length(sig_expts{ii}));
-    nm_sig=cell(length(odor_concentration_list),length(odor_list),length(sig_expts{ii}));
+   % nm_peak_sig=nan(length(odor_concentration_list),length(odor_list),length(sig_expts{ii}));
+   % nm_sig=cell(length(odor_concentration_list),length(odor_list),length(sig_expts{ii}));
     neurons=[str2double(date)*ones(length(sig_expts{ii}),1),...
         animal*ones(length(sig_expts{ii}),1),expt*ones(length(sig_expts{ii}),1),...
         (1:length(sig_expts{ii}))'];
     
-        nm_sig=tsne_data.nmSigMat;
-        nm_peak_sig=tsne_data.nmPeakSigMat;
+    [~,nm_sig,nm_peak_sig,~,~,~,neuron_fire]=calc_nm_sig(tsne_data.odor_seq,tsne_data.cluster_signals);
+        %nm_sig=tsne_data.nmSigMat;
+        %nm_peak_sig=tsne_data.nmPeakSigMat;
    tCourseNeuron.t=[tCourseNeuron.t;...
        cellfun(@(x)tsne_data.t,tsne_data.nm_signals,'UniformOutput',false)];
    tCourseNeuron.sig=[tCourseNeuron.sig;tsne_data.nm_signals];
@@ -53,5 +55,6 @@ for ii=1:length(data_files)
     nmSigDay=cat(3,nmSigDay,nm_sig);
     neuronCoMDay=[neuronCoMDay;tsne_data.neuron_CoM];
     neuronVarDay=[neuronVarDay;tsne_data.neuron_var];
+    neuronFireDay=cat(3,neuronFireDay,neuron_fire);
 end
 

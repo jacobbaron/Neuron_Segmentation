@@ -18,12 +18,16 @@ markers={'o','+','*','x','s','d'};
     hold off;
 
 drawnow;
+%% 
 pts=getrect;
 pts_list1=tsne_result_peaks(:,1)>pts(1) & tsne_result_peaks(:,1)<pts(1)+pts(3);
 pts_list2=tsne_result_peaks(:,2)>pts(2) & tsne_result_peaks(:,2)<pts(2)+pts(4);
 cluster=find(pts_list1&pts_list2);
 cols=ceil(sqrt(length(cluster)));
 rows=ceil(length(cluster)/cols);
+
+
+%% 
 figure(2);
 runnums=cellfun(@(x,y)sprintf('%d, #%d',x,y),num2cell(neuronsListDay(:,2)*100+neuronsListDay(:,3)),...
     num2cell(neuronsListDay(:,4)),'UniformOutput',false);
