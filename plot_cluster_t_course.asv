@@ -1,4 +1,4 @@
-function [f,ax,ax3D]=plot_cluster_t_course(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
+function [f,ax]=plot_cluster_t_course(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
 tabbed=0;
 if isstruct(varargin{1}) %use tsne_data to plot
     tsne_data=varargin{1};
@@ -15,7 +15,6 @@ if isstruct(varargin{1}) %use tsne_data to plot
     labels2plot=unique(labels(labels>1));
     if nargin==2
         tabbed=1;
-        axID=varargin{2};
     end
 elseif nargin==7
     [tdata,signals,odor_seq,red_img,labels,filename,labels2plot]=...
@@ -30,21 +29,15 @@ end
 num_clusters=length(unique(labels(labels>1)));
 
 cmap=generate_cmap(num_clusters);
-if ~tabbed
-    f=figure('units','normalized','outerposition',[0 0 1 1]);
-else
-    f=[];
-end
+
+f=figure('units','normalized','outerposition',[0 0 1 1]);
+
 
 [~,name]=fileparts(filename);
 name=strrep(name,'_',' ');
 ratio=4;
 for ii=1:length(labels2plot)
-    if tabbed
-        subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio],axID(ii))
-    else
-        subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio])
-    end
+    subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio])
     
     h(ii)=plot(tdata,signals{ii},'LineWidth',3);
     h(ii).Color=cmap(ii+1,:);
@@ -78,14 +71,8 @@ for ii=1:length(labels2plot)
     ylab.FontWeight='bold';
     
 end
-    if tabbed
-        subplot(1,ratio,1,axID(end))
-    else
-        subplot(1,ratio,1)
-    end
+    
+    subplot(1,ratio,1)
     plot_3d_stuff(labels,labels2plot,red_img,cmap(labels2plot,:));
     ax3D=gca;
     ax3D.Position=[.015,-0.27,.3,1.6];
-    if exist('axID','var')
-        ax=axID;
-    end

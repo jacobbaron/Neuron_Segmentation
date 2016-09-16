@@ -32,4 +32,7 @@ function [sigs,odors,fire,f]=dispNeuronSignals(nmPeakSig,neuron_fire,thetitle,ne
         ax.YTick=1:size(sigs,1);
         title(thetitle)
         fire=neuron_fire(idx_stack)';
+    else
+        fire=[];
     end
+    
