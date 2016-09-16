@@ -57,7 +57,11 @@ for ii=1:length(labels2plot)
     if ii==length(labels2plot)
         xlabel('Time(sec)')
     end
-    ylab=ylabel(num2str(ii),'rot',0);
+    if isfield(tsne_data,'neuronID')
+        ylab=ylabel(tsne_data.neuronID{ii},'rot',0);
+    else
+        ylab=ylabel(num2str(ii),'rot',0);
+    end
     ylab.VerticalAlignment='middle';
     ylab.HorizontalAlignment='right';
     ylab.FontWeight='bold';

@@ -1,1 +1,4 @@
 dep/*
+*.pkl
+*.npy
+*_data.mat
