@@ -3,10 +3,6 @@ function [f,ax]=editNeurons4Classifier(tsne_data,f,ax)
     
     if ~exist('f','var')
         [f,ax]=plot_cluster_t_course(tsne_data);    
-    else
-        if ~isvalid(f)
-            [f,ax]=plot_cluster_t_course(tsne_data);
-        end
     end
     
     

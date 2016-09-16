@@ -1,4 +1,4 @@
-function [f]=plot_cluster_t_course(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
+function [f,ax]=plot_cluster_t_course(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
 if isstruct(varargin{1}) %use tsne_data to plot
     tsne_data=varargin{1};
     tdata=varargin{1}.t;
@@ -37,8 +37,8 @@ for ii=1:length(labels2plot)
     
     h(ii)=plot(tdata,signals{ii},'LineWidth',3);
     h(ii).Color=cmap(ii+1,:);
-    ax=gca;
-    ax.YLim=[min(signals{ii}) - 0.1 * max(signals{ii}),max(signals{ii}) + 0.1 * max(signals{ii})];
+    ax(ii)=gca;
+    ax(ii).YLim=[min(signals{ii}) - 0.1 * max(signals{ii}),max(signals{ii}) + 0.1 * max(signals{ii})];
     xlim([0,max(tdata)]);
     if exist('tsne_data','var')
         if isfield(tsne_data,'neuron_fire')
@@ -50,9 +50,9 @@ for ii=1:length(labels2plot)
     
     if ii==1
         
-        ylimit=ax.YLim;
+        ylimit=ax(ii).YLim;
         title(gca,name)
-        ax.YLim=ylimit;
+        ax(ii).YLim=ylimit;
     end
     if ii==length(labels2plot)
         xlabel('Time(sec)')
@@ -70,5 +70,5 @@ end
     
     subplot(1,ratio,1)
     plot_3d_stuff(labels,labels2plot,red_img,cmap(labels2plot,:));
-    ax=gca;
-    ax.Position=[.015,-0.27,.3,1.6];
+    ax3D=gca;
+    ax3D.Position=[.015,-0.27,.3,1.6];
