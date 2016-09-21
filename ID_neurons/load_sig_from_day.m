@@ -28,16 +28,10 @@ for ii=1:length(data_files)
     sig_expts{ii}=tsne_data.cluster_signals;
     labels_expts{ii}=tsne_data.labels; 
     odor_seq{ii}=tsne_data.odor_seq;
-    try
     runidx=strfind(data_files(ii).name,'run')+3;
-    catch
-        1;
-    end
     dotidx=strfind(data_files(ii).name,'.nd2')-1;
     animal=floor(str2double(data_files(ii).name(runidx:dotidx))/100);
     expt=rem(str2double(data_files(ii).name(runidx:dotidx)),animal*100);
-   % nm_peak_sig=nan(length(odor_concentration_list),length(odor_list),length(sig_expts{ii}));
-   % nm_sig=cell(length(odor_concentration_list),length(odor_list),length(sig_expts{ii}));
     neurons=[str2double(date)*ones(length(sig_expts{ii}),1),...
         animal*ones(length(sig_expts{ii}),1),expt*ones(length(sig_expts{ii}),1),...
         (1:length(sig_expts{ii}))'];

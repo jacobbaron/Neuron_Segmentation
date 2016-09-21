@@ -1,4 +1,4 @@
-function [test_data]=prepare_test_data(nmPeakSigMat,odors2exclude_idx)
+function [test_data,nmPeakSigMat]=prepare_test_data(nmPeakSigMat,odors2exclude_idx)
 if ~isempty(odors2exclude_idx)
     nmPeakSigMat(odors2exclude_idx(1,:),odors2exclude_idx(2,:),:)=NaN;
 end
