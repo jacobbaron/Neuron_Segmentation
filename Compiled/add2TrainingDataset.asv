@@ -1,5 +1,5 @@
 function add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew)
-    [~,date,~]=fileparts(pwd);
+
     runidx=strfind(filenameNew,'run')+3;
     dotidx=strfind(filenameNew,'.nd2')-1;
     animal=floor(str2double(filenameNew(runidx:dotidx))/100);
@@ -19,7 +19,7 @@ function add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew)
     C.neuronList=[C.neuronList;neuronsListNew];
     C.labels=[C.labels;labelsNew'];
     C.nmPeakSig=cat(3,C.nmPeakSig,nmPeakSigNew);
-    [C.nmSigList,C.odorsList]=dispNeuronSignals(C.nmPeakSig);
+    [C.nmSigList,C.odorsList]=dispNe
     save(compiled_data_path,'-struct','C');
     
     

@@ -46,7 +46,7 @@ usedSig=nmPeakSigList(usedLabels_idx,usedOdorConc_idx);
 training_data.labels=usedLabels;
 training_data.odors=usedOdorConc;
 training_data.unique_labels=unique_labels(~strcmp(unique_labels,'NaN'));
-training_data.signal=usedSig_impute;
+training_data.signal=usedSig;
 training_data.ORN2num=ORN2num;
 training_data.neuronList=neuronList(usedLabels_idx,:);
 

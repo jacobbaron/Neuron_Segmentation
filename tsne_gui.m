@@ -39,9 +39,11 @@ foreground_title=[];
 selected_pts=[];
 roi=[];
 nm_sig={};
-nmPeakSig=[];larva_side=[];
+movie_loaded=0;IDed=0;tsned=0;clustered=0;
+nmPeakSig=[];larva_side=[];orns=[];
 neuronID=[];neurons2include=[];nmPeakSigTestMat=[];includeInClassifier=[];
 ax_NID= gobjects(0);ax3D= gobjects(0);submit_button=[];ORNMenu=[];include_chkbox=[];
+confirmed=[];
 %% 
 
         SFntSz = 9;
@@ -238,11 +240,13 @@ add2trainset=uimenu(mh,'Label','Add to Training Dataset','Callback',{@add2traini
 
 
 edit_menu=uimenu(gcf,'Label','Edit');
+restore_training_set=uimenu(mh,'Label','Restore Other Training Database','Enable','On',...
+    'Callback',{@restore_database});
 select_ROI_item=uimenu(edit_menu,'Label','Select ROI','Callback',{@get_ROI});
 
 run_menu=uimenu(gcf,'Label','Run');
 run_alignment_menu=uimenu(run_menu,'Label','Run Alignment',...
-    'Callback',{@run_alignment});
+    'Callback',{@man_run_alignment});
 run_tsne_menu=uimenu(run_menu,'Label','Run t-SNE',...
     'Callback',{@run_tsne});
 run_clustering_menu=uimenu(run_menu,'Label','Run Clustering',...
@@ -257,7 +261,8 @@ plot_sig_button=uimenu(disp_menu,'Label','Plot Signals','Callback',...
     {@plot_signals});
 make_movie_button=uimenu(disp_menu,'Label','Make Movie!','Callback',...
     {@makemovie});
-
+disp_red_channel=uimenu(disp_menu,'Label','Show Aligned Red Channel','Callback',...
+    {@view_aligned_red_channel});
 % import_data_btn=uicontrol('Parent',tsne_tab,...
 %     'Style','pushbutton',...
 %     'Position',import_data_pos,...
@@ -317,12 +322,24 @@ ID_tab.Units='pixels';
         submit_buttonSZ=[150/fpositionPix(3),60/fpositionPix(4)];
         submit_button_pos=[fpositionNorm(3)-submit_buttonSZ(1)-80/fpositionPix(3),...
             submit_buttonSZ(2)+20/fpositionPix(4),submit_buttonSZ];
-        submit_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
+        cancel_button_pos=[submit_button_pos(1),...
+            submit_button_pos(2)-submit_button_pos(4)-btn_space/fpositionPix(3),...
+            submit_button_pos(3:4)];
+        confirm_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
             'Units','normalized',...
             'Position',submit_button_pos,...
-            'String','Save ORN Labels',...
+            'String','Confirm',...
             'FontSize',12,...
-            'Callback',{@submit});
+            'Callback',{@confirm},...
+            'Visible','off');
+        cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
+            'Units','normalized',...
+            'Position',cancel_button_pos,...
+            'String','Cancel',...
+            'FontSize',12,...
+            'Callback',{@cancel},...
+            'Visible','off');
+        1;
 %set (gcf, 'ButtonDownFcn', @mouseClick);
 %set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
 %set(gcf,'WindowButtonUpFcn', @mouseRelease)
@@ -330,66 +347,103 @@ ID_tab.Units='pixels';
 %set(tsne_ax,'ButtonDownFcn',@draw_rect)
 %% functions!
 
-    function manual_cluster(hObj,event)
-        if isempty(tsne_data)&&isempty(tsne_data_no_cluster)
-            warndlg('Run t-SNE or import t-SNE data first');
-        else
-            if isempty(tsne_data) %no clustering has happened yet
-                tsne_data=tsne_data_no_cluster;
-                tsne_data.labels=double(foreground);
-            end
-        unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
-        num_clusters=length(unique_clusters);
-%         load('neuron_seg_colormap.mat','n_seg_cmap');
-%         cmap_idx=round(linspace(1,size(n_seg_cmap,1),num_clusters-1));
-%         cmap_selection=flipud([n_seg_cmap(cmap_idx,:);.7,.7,.7]);
+%% importing functions
+    %import t-sne data file
+    function erase_ID_tab(varargin)
+        not_buttons=~ismember(ID_tab.Children,[cancel_button,confirm_button]);
+        delete(ID_tab.Children(not_buttons));
+    end
+    function importdata(varargin)
+        
+        fname=uigetfile('*tsne_data.mat','Choose t-SNE data .mat file');
+        
+        if ~isempty(fname)
+           
+           ld=load(fname);
+           try
+               tsne_data=ld.tsne_data;
+               movie_loaded=1;tsned=1;clustered=1;
+               erase_ID_tab;
+           catch
+               warndlg(sprintf('No t-SNE data found! \nTry again.'));
+           end
 
-        tsne_result_full=tsne_data.tsne_result(tsne_data.precluster_groups,:);
-        title(tsne_ax,'Select points to assign to cluster')
-        eval=1;
-        try
-            rect=getrect_JB(tsne_ax);
-        catch
-            eval=0;
         end
-        if eval
-            title(tsne_ax,'t-SNE Result')
-            if num_clusters>1
-                asgn=choose_cluster(unique_clusters,tsne_data.cmap);
-            else
-                asgn=max(unique_clusters)+1;
-            end
-            if ~isempty(asgn)
-                if strcmp(asgn,'New cluster')
-                    asgn=max(unique_clusters)+1;
-                end
-                if strcmp(asgn,'Noise')
-                    asgn=1;
-                end
-                selected_pts_x=(tsne_result_full(:,1)>rect(1)) & ...
-                    (tsne_result_full(:,1)<rect(1)+rect(3));
-                selected_pts_y=(tsne_result_full(:,2)>rect(2)) & ...
-                    (tsne_result_full(:,2)<rect(2)+rect(4));
-                foreground_labels=double(tsne_data.labels(foreground));
-                foreground_labels(selected_pts_x & selected_pts_y)=asgn;
-                tsne_data.labels(foreground)=foreground_labels;
-
-                unique_no_noise_clusters=unique(tsne_data.labels(tsne_data.labels>1));
-
-                for ii=1:length(unique_no_noise_clusters)
-                    tsne_data.labels(tsne_data.labels==unique_no_noise_clusters(ii))=...
-                        ii+1;
-                end
-                unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
-                tsne_data.neuronID=cellfun(@num2str,...
-                        num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
-                tsne_data.cmap=generate_cmap(length(unique_clusters(unique_clusters>1)));
-                plot_tsne_clusters;
-            end
-        end            
+        if ~isfield(tsne_data,'filenames')
+            img_data.filename=uigetfile('*.nd2',sprintf('Choose nd2 filename for %s',fname));
+            img_data.filename_log=uigetfile('log_*.txt',sprintf('Choose log filename for %s',fname));
+        else
+            img_data.filename=tsne_data.filenames{1};
+            img_data.filename_log=tsne_data.filenames{2};
+        end
+        filename=img_data.filename;
+        setup_figures;
+        Img4D=tsne_data.aligned_green_img;
+        if isfield(tsne_data,'which_side')
+            larva_side=tsne_data.which_side;
+        end
+        Z=round(size(Img4D,3)/2);
+        S=1;
+        aligned_green_img=tsne_data.aligned_green_img;
+        aligned_red_img=tsne_data.aligned_red_img;
+        odor_seq=tsne_data.odor_seq;
+        if isfield(tsne_data,'roi')
+            roi=tsne_data.roi;
+        end
+        if ~isfield(tsne_data,'neuronID')
+            tsne_data.neuronID=cellfun(@num2str,...
+                    num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
+            IDed=0;
+        else
+            plot_signals_w_labels;
+            IDed=1;
+        end
+        image_times=tsne_data.t;
+        display_movie;
+        
+        aligned_green_img_full=[];
+        aligned_red_img_full=[];
+        run_pca;
+        foreground=tsne_data.labels>0;
+        foreground_img=tsne_data.labels;
+        
+        display_foreground;
+        plot_tsne_clusters;
+        
+    end
+    %import nd2 movie file
+    function importimg(varargin)
+        
+    
+        
+        fname=uigetfile('*.nd2');
+        if all(fname~=0)
+            fnamelog=uigetfile('log_*');
+        
+            if all(fnamelog ~= 0)
             
+                img_data=import_nd2_files(1,fname,fnamelog);
+                erase_ID_tab;
+                odor_seq=img_data.odor_seq;
+                if isfield(img_data,'which_side')
+                    larva_side=img_data.which_side;
+                end
+                if any(strcmp(varargin,'preloaded'))
+                    run_alignment('preloaded');
+                    get_ROI('preloaded');
+
+                else
+                    run_alignment;
+                    get_ROI;
+
+                end
+                movie_loaded=1;IDed=0;tsned=0;clustered=0;
+            end
         end
     end
+
+
+%% interactive functions
     function filt_inten(hObj,event)
         cmap_full=[cmap1;cmap];
         colormap(ax_foreground,cmap_full)
@@ -402,7 +456,7 @@ ID_tab.Units='pixels';
         foreground_title.String=sprintf('%s\nForeground has %d points',...
             name,length(find(foreground_img)));
     end
-% -=< Slice slider callback function >=-
+    % -=< Slice slider callback function >=-
     function SliceSlider (hObj,event, Img4D)
         S = round(get(hObj,'Value'));
         img.CData=C1(:,:,Z,S);
@@ -424,7 +478,7 @@ ID_tab.Units='pixels';
         
         
     end
-% -=< Mouse scroll wheel callback function >=-
+    % -=< Mouse scroll wheel callback function >=-
     function mouseScroll (object, eventdata)
         for ii=1:length(object.Children)
            if strcmp(object.Children(ii).Type,'uitabgroup')
@@ -461,7 +515,7 @@ ID_tab.Units='pixels';
         
         
     end
-% -=< Window and level to range conversion >=-
+    % -=< Window and level to range conversion >=-
     function [Rmn Rmx] = WL2R(W,L)
         Rmn = L - (W/2);
         Rmx = L + (W/2);
@@ -469,8 +523,9 @@ ID_tab.Units='pixels';
             Rmx = Rmn + 1;
         end
     end
-% -=< Window and level auto adjustment callback function >=-
+    % -=< Window and level auto adjustment callback function >=-
 
+%% tsne prep functions
     function setup_figures(varargin)
         Img4D=aligned_green_img;
         sno = size(Img4D,4);  % number of slices
@@ -587,13 +642,15 @@ ID_tab.Units='pixels';
                 plot(tsne_ax,1,1,'Visible','Off')
                 setup_figures;
                 
-                msgbox('Movie Imported Successfully!');
+                msg=msgbox('Movie Imported Successfully!');
+                uiwait(msg);
             end
         end
     end
     function get_ROI(varargin)
         if isempty(aligned_green_img_full)
-            msgbox('Full movie does not exist. Reload to adjust ROI');
+            msg=msgbox('Full movie does not exist. Reload to adjust ROI');
+            uiwait(msg);
         else
         if ~any(strcmp(varargin,'preloaded'))
             img=imshow(max(max(aligned_green_img_full,[],3),[],4), [Rmin Rmax],'Parent',ax_foreground);
@@ -658,162 +715,18 @@ ID_tab.Units='pixels';
         foreground=foreground_img;
         
     end
-    function run_tsne(varargin)
-        foreground=foreground_img;
-        max_iter=str2num(num_iter_box.String);
-       tsne_data_no_cluster=CIA_TSNE(aligned_green_img,foreground,...
-           odor_seq,'tsne_iter',max_iter);
-        plot(tsne_ax,tsne_data_no_cluster.tsne_result(:,1),...
-            tsne_data_no_cluster.tsne_result(:,2),'.')
-       
-       
+    function man_run_alignment(varargin)
+        run_alignment;
+        get_roi;
     end
-    function run_clustering(varargin)
-        try
-            close(tcourse_fig)
-        end
-        if ~isempty(tsne_data_no_cluster)
-            if size(tsne_data_no_cluster.foreground)==...
-                    size(aligned_green_img(:,:,:,1))
-                alpha=str2num(alpha_box.String);
-                k=str2num(k_box.String);
-                tsne_data=CIA_LSBDC(tsne_data_no_cluster,aligned_green_img,...
-                    odor_seq,'alpha',alpha,'k',k);
-                
-                tsne_data.neuronID=cellfun(@num2str,...
-                    num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
-                tsne_data.t=image_times;
-                tsne_data.odor_seq=odor_seq;
-                tsne_data.aligned_red_img=aligned_red_img;
-                tsne_data.aligned_green_img=aligned_green_img;
-                tsne_data.filenames={img_data.filename,img_data.filename_log};
-                plot_tsne_clusters;
-                [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);
-                
-                msgbox('Segmentation Success!');
-            else
-                warndlg(sprintf('Run t-SNE or import data before running clustering'));
-            end
-        else
-            warndlg(sprintf('Run t-SNE or import data before running clustering'));
-        end
-    end
-    function plot_tsne_clusters(varargin)
-        unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
-        tsne_result_full=tsne_data.tsne_result(tsne_data.precluster_groups,:);
-        cmap_full=[cmap1;1,1,1;tsne_data.cmap];
-        colormap(ax_foreground,cmap_full)
-
-        foreground_img=tsne_data.labels+1;
-        lb.CData=foreground_img(:,:,Z)+length(cmap1);
-        for ii=1:length(unique_clusters)
-
-            h(ii)=plot(tsne_ax,tsne_result_full(tsne_data.labels(tsne_data.labels>0)==unique_clusters(ii),1),...
-                tsne_result_full(tsne_data.labels(tsne_data.labels>0)==unique_clusters(ii),2),'.');
-            hold(tsne_ax, 'on');
-            if unique_clusters(ii)==1
-                h(ii).MarkerEdgeColor=tsne_data.cmap(1,:);
-            else
-                h(ii).MarkerEdgeColor=tsne_data.cmap(unique_clusters(ii),:);
-            end
-            
-        end
-        hold(tsne_ax,'off');
-        
-        if unique_clusters(1)==1
-            cluster_names=['Noise',tsne_data.neuronID];
-        else
-            cluster_names=tsne_data.neruonID;
-        end
-        leg=legend(h,cluster_names);
-        leg.Visible='On';
+    function view_aligned_red_channel(varargin)
+        imshow4D_wheel(aligned_red_img)
     end
 
-%importing functions
-    function importdata(varargin)
-       
-        fname=uigetfile('*tsne_data.mat','Choose t-SNE data .mat file');
-        
-        if ~isempty(fname)
-           ld=load(fname);
-           try
-               tsne_data=ld.tsne_data;
-           catch
-               warndlg(sprintf('No t-SNE data found! \nTry again.'));
-           end
-
-        end
-        if ~isfield(tsne_data,'filenames')
-            img_data.filename=uigetfile('*.nd2',sprintf('Choose nd2 filename for %s',fname));
-            img_data.filename_log=uigetfile('log_*.txt',sprintf('Choose log filename for %s',fname));
-        else
-            img_data.filename=tsne_data.filenames{1};
-            img_data.filename_log=tsne_data.filenames{2};
-        end
-        filename=img_data.filename;
-        setup_figures;
-        Img4D=tsne_data.aligned_green_img;
-        if isfield(tsne_data,'which_side')
-            larva_side=tsne_data.which_side;
-        end
-        Z=round(size(Img4D,3)/2);
-        S=1;
-        aligned_green_img=tsne_data.aligned_green_img;
-        aligned_red_img=tsne_data.aligned_red_img;
-        odor_seq=tsne_data.odor_seq;
-        if isfield(tsne_data,'roi')
-            roi=tsne_data.roi;
-        end
-        if ~isfield(tsne_data,'neuronID')
-            tsne_data.neuronID=cellfun(@num2str,...
-                    num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
-        end
-        image_times=tsne_data.t;
-        display_movie;
-        
-        aligned_green_img_full=[];
-        aligned_red_img_full=[];
-        run_pca;
-        foreground=tsne_data.labels>0;
-        foreground_img=tsne_data.labels;
-        
-        display_foreground;
-        plot_tsne_clusters;
-    end
-    function importimg(varargin)
-        fname=uigetfile('*.nd2');
-        fnamelog=uigetfile('log_*');
-        
-        if all(fname~=0) && all(fnamelog ~= 0)
-            img_data=import_nd2_files(1,fname,fnamelog);
-            odor_seq=img_data.odor_seq;
-            if isfield(img_data,'which_side')
-                larva_side=img_data.which_side;
-            end
-            if any(strcmp(varargin,'preloaded'))
-                run_alignment('preloaded');
-                get_ROI('preloaded');
-                
-            else
-                run_alignment;
-                get_ROI;
-                
-            end
-        end
-    end
-    function run_everything(varargin)
-        run_tsne;
-        run_clustering;
-        
-        
-    end
-
-    function display_movie(varargin)
-        %% load background and green channel image
-        %% load colormap
-        
-        neuronID=[];neurons2include=[];nmPeakSigTestMat=[];includeInClassifier=[];
-        ax_NID= gobjects(0);ax3D= gobjects(0);submit_button=[];ORNMenu=[];include_chkbox=[];
+%%  preparation figures
+    function display_movie(varargin)        
+        %neuronID=[];neurons2include=[];nmPeakSigTestMat=[];includeInClassifier=[];
+       %ax_NID= gobjects(0);ax3D= gobjects(0);submit_button=[];ORNMenu=[];include_chkbox=[];
 
         img=imshow(Img4D(:,:,Z,S), [Rmin Rmax],'Parent',ax_foreground);
         cmap=[0,0,0;1,1,1];
@@ -864,7 +777,6 @@ ID_tab.Units='pixels';
            end
         end
     end
-
     function display_foreground(varargin)
         lb=imshow(foreground_img(:,:,Z), [Rmin Rmax],'Parent',ax_foreground);
         lb.CDataMapping='direct';
@@ -884,25 +796,176 @@ ID_tab.Units='pixels';
         inten_sld.Callback=@filt_inten;
         inten_txt.String='Background Threshold';
     end
-    function plot_signals(varargin)
+    
+
+%% t-sne + clustering functions
+    function run_tsne(varargin)
+        foreground=foreground_img;
+        max_iter=str2num(num_iter_box.String);
+       tsne_data_no_cluster=CIA_TSNE(aligned_green_img,foreground,...
+           odor_seq,'tsne_iter',max_iter);
+        plot(tsne_ax,tsne_data_no_cluster.tsne_result(:,1),...
+            tsne_data_no_cluster.tsne_result(:,2),'.')
+       tsned=1;
+       
+    end
+    function run_clustering(varargin)
         try
-            close(tcourse_fig);
-            close(peak_sig_fig);
+            close(tcourse_fig)
         end
-        tsne_data=calculate_cluster_signals(tsne_data,aligned_green_img,odor_seq);
-        [~,nm_sig,nmPeakSig]=...
-             calc_nm_sig(odor_seq,tsne_data.cluster_signals);
-         
-         tsne_data.nmPeakSigMat=nmPeakSig;
-         tsne_data.nmSigMat=nm_sig;
-         
-         
-        [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);         
-         
-         [~,name]=fileparts(filename);
-         name=strrep(name,'_',' ');
-         [~,~,~,peak_sig_fig]=dispNeuronSignals(nmPeakSig,[],name,tsne_data.neuronID);
-         
+        if ~isempty(tsne_data_no_cluster)
+            if size(tsne_data_no_cluster.foreground)==...
+                    size(aligned_green_img(:,:,:,1))
+                alpha=str2num(alpha_box.String);
+                k=str2num(k_box.String);
+                tsne_data=CIA_LSBDC(tsne_data_no_cluster,aligned_green_img,...
+                    odor_seq,'alpha',alpha,'k',k);
+                
+                tsne_data.neuronID=cellfun(@num2str,...
+                    num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
+                tsne_data.t=image_times;
+                tsne_data.odor_seq=odor_seq;
+                tsne_data.aligned_red_img=aligned_red_img;
+                tsne_data.aligned_green_img=aligned_green_img;
+                tsne_data.filenames={img_data.filename,img_data.filename_log};
+                plot_tsne_clusters;
+                [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);
+                
+                msg=msgbox('Segmentation Success!');
+                uiwait;
+                clustered=1;
+            else
+                warndlg(sprintf('Run t-SNE or import data before running clustering'));
+            end
+        else
+            warndlg(sprintf('Run t-SNE or import data before running clustering'));
+        end
+        
+    end
+    function run_everything(varargin)
+        run_tsne;
+        run_clustering;
+    end
+    function manual_cluster(hObj,event)
+        if isempty(tsne_data)&&isempty(tsne_data_no_cluster)
+            warndlg('Run t-SNE or import t-SNE data first');
+        else
+            if isempty(tsne_data) %no clustering has happened yet
+                tsne_data=tsne_data_no_cluster;
+                tsne_data.labels=double(foreground);
+            end
+        unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
+        num_clusters=length(unique_clusters);
+%         load('neuron_seg_colormap.mat','n_seg_cmap');
+%         cmap_idx=round(linspace(1,size(n_seg_cmap,1),num_clusters-1));
+%         cmap_selection=flipud([n_seg_cmap(cmap_idx,:);.7,.7,.7]);
+
+        tsne_result_full=tsne_data.tsne_result(tsne_data.precluster_groups,:);
+        title(tsne_ax,'Select points to assign to cluster')
+        eval=1;
+        try
+            rect=getrect_JB(tsne_ax);
+        catch
+            eval=0;
+        end
+        if eval
+            title(tsne_ax,'t-SNE Result')
+            if num_clusters>1
+                asgn=choose_cluster(unique_clusters,tsne_data.cmap);
+            else
+                asgn=max(unique_clusters)+1;
+            end
+            if ~isempty(asgn)
+                if strcmp(asgn,'New cluster')
+                    asgn=max(unique_clusters)+1;
+                end
+                if strcmp(asgn,'Noise')
+                    asgn=1;
+                end
+                selected_pts_x=(tsne_result_full(:,1)>rect(1)) & ...
+                    (tsne_result_full(:,1)<rect(1)+rect(3));
+                selected_pts_y=(tsne_result_full(:,2)>rect(2)) & ...
+                    (tsne_result_full(:,2)<rect(2)+rect(4));
+                foreground_labels=double(tsne_data.labels(foreground));
+                foreground_labels(selected_pts_x & selected_pts_y)=asgn;
+                tsne_data.labels(foreground)=foreground_labels;
+
+                unique_no_noise_clusters=unique(tsne_data.labels(tsne_data.labels>1));
+
+                for ii=1:length(unique_no_noise_clusters)
+                    tsne_data.labels(tsne_data.labels==unique_no_noise_clusters(ii))=...
+                        ii+1;
+                end
+                unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
+                tsne_data.neuronID=cellfun(@num2str,...
+                        num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
+                tsne_data.cmap=generate_cmap(length(unique_clusters(unique_clusters>1)));
+                plot_tsne_clusters;
+                clustered=1;
+            end
+        end            
+            
+        end
+    end
+
+%% plotting and saving
+    function plot_tsne_clusters(varargin)
+        if tsned
+        unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
+        tsne_result_full=tsne_data.tsne_result(tsne_data.precluster_groups,:);
+        cmap_full=[cmap1;1,1,1;tsne_data.cmap];
+        colormap(ax_foreground,cmap_full)
+
+        foreground_img=tsne_data.labels+1;
+        lb.CData=foreground_img(:,:,Z)+length(cmap1);
+        for ii=1:length(unique_clusters)
+
+            h(ii)=plot(tsne_ax,tsne_result_full(tsne_data.labels(tsne_data.labels>0)==unique_clusters(ii),1),...
+                tsne_result_full(tsne_data.labels(tsne_data.labels>0)==unique_clusters(ii),2),'.');
+            hold(tsne_ax, 'on');
+            if unique_clusters(ii)==1
+                h(ii).MarkerEdgeColor=tsne_data.cmap(1,:);
+            else
+                h(ii).MarkerEdgeColor=tsne_data.cmap(unique_clusters(ii),:);
+            end
+            
+        end
+        hold(tsne_ax,'off');
+        
+        if unique_clusters(1)==1
+            cluster_names=['Noise',tsne_data.neuronID];
+        else
+            cluster_names=tsne_data.neuronID;
+        end
+        leg=legend(h,cluster_names);
+        leg.Visible='On';
+        else
+            warndlg('Run t-sne first!');
+        end
+    end
+    function plot_signals(varargin)
+        if clustered
+            try
+                close(tcourse_fig);
+                close(peak_sig_fig);
+            end
+            tsne_data=calculate_cluster_signals(tsne_data,aligned_green_img,odor_seq);
+            [~,nm_sig,nmPeakSig]=...
+                 calc_nm_sig(odor_seq,tsne_data.cluster_signals);
+
+             tsne_data.nmPeakSigMat=nmPeakSig;
+             tsne_data.nmSigMat=nm_sig;
+
+
+            [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);         
+
+             [~,name]=fileparts(filename);
+             name=strrep(name,'_',' ');
+             [~,~,~,peak_sig_fig]=dispNeuronSignals(nmPeakSig,[],name,tsne_data.neuronID);
+        else
+            warndlg('Cluster first!')
+        end
+        
     end
     function makemovie(varargin)
         mov=animate_3d_stuff2(tsne_data.labels,2:max(tsne_data.labels(:)),...
@@ -933,14 +996,17 @@ ID_tab.Units='pixels';
             savefig(tcourse_fig,fullfile(pname,fname));
             savefig(peak_sig_fig,fullfile(pname,fname2));
             save(strcat(filename,'_tsne_data.mat'),'tsne_data')
-            msgbox('Data Saved!');
+            sv=msgbox('Data Saved!');
+            uiwait(sv);
         end
         
         
     end
+
+%% classifier functions
     function idNeurons(varargin)
-        
-        odors2exclude_idx=selectTestOdorSet(odor_seq);
+        nmPeakSigTestMat=[];
+        odors2exclude_idx=fliplr(selectTestOdorSet(odor_seq));
         ORNs2use=selectTestORNbasis;
         tsne_data=calculate_cluster_signals(tsne_data,aligned_green_img,odor_seq);
         [~,tsne_data.nmSigMat,tsne_data.nmPeakSigMat]=...
@@ -958,38 +1024,89 @@ ID_tab.Units='pixels';
 %                 close(tcourse_fig);
 %                 close(peak_sig_fig);
 %             end
-            if ~isempty(ORNMenu)
-                for ii=1:length(ORNMenu)
-                    delete(ORNMenu(ii))
-                    delete(include_chkbox(ii))
-                    delete(ax_NID(ii))
-                end
-                delete(ax3D)
-            end            
+         
 
-            ax_NID= gobjects(0);
-            for ii=1:length(tsne_data.cluster_signals)+1
-               ax_NID(ii)=axes('Parent',ID_tab); 
-            end
+            plot_signals_w_labels;
             
-            [~,ax_NID,ax3D]=plot_cluster_t_course(tsne_data,ax_NID);
-            [ID_tab,ax_NID,...
-                ORNMenu, include_chkbox]=editNeurons4Classifier(tsne_data,ID_tab,ax_NID);
+
             [~,~,peak_sig_fig]=dispNeuronSignals(tsne_data.nmPeakSigMat,[],tsne_data.filenames{1},tsne_data.neuronID);
           %  close(w);
        % end
-       
+       1;
     end
-    function submit(varargin)
-        if ~isempty(include_chkbox)
-            includeInClassifier=logical([include_chkbox(:).Value])';
-            tsne_data.neuronID=orns([ORNMenu(:).Value]);
+    function plot_signals_w_labels(varargin)
+        erase_ID_tab;
+        ax_NID= gobjects(0);
+        for ii=1:length(tsne_data.cluster_signals)+1
+           ax_NID(ii)=axes('Parent',ID_tab); 
         end
+        [~,ax_NID,ax3D]=plot_cluster_t_course(tsne_data,ax_NID);
+        [ID_tab,ax_NID,...
+            ORNMenu, include_chkbox,orns]=editNeurons4Classifier(tsne_data,ID_tab,ax_NID);
+        for ii=1:length(ORNMenu)
+            ORNMenu(ii).Callback={@change_neuronID,orns,ii};
+        end
+        IDed=1;
     end
-
+    function change_neuronID(varargin)
+        ornz=varargin{3};
+        menu=varargin{1};
+        ii=varargin{4};
+        tsne_data.neuronID{ii}=ornz{menu.Value};
+        if any(tsne_data.labels(:)==1)
+            cluster_names=['Noise',tsne_data.neuronID];
+        else
+            cluster_names=tsne_data.neuronID;
+        end
+        leg.String=cluster_names;
+        1;
+    end
+    function confirm(varargin)
+        confirmed=1;
+        uiresume;
+    end
+    function cancel(varargin)
+        confirmed=0;
+        uiresume;
+    end
     function add2trainingset(varargin)
-        
+        if IDed
+            include=logical([include_chkbox(:).Value]);
+            known=~strcmp(tsne_data.neuronID,'Unknown\NaN');
+            include=include & known;
+            nmPeakSigNew=tsne_data.nmPeakSigMat(:,:,include);
+            filenameNew=tsne_data.filenames{1};
+            labelsNew=tsne_data.neuronID(include);
+            tgroup.SelectedTab=ID_tab;
+            confirm_button.Visible='on';
+            cancel_button.Visible='on';
+            uiwait;
+            confirm_button.Visible='off';
+            cancel_button.Visible='off';
+            add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew)
+            msg=msgbox('Added to training database!');
+            
+        else
+            warndlg('Neuron IDs not availabel, run identification first!')
+        end
         
     end
+    function restore_database(varargin)
+        compiled_data_folder=fileparts(which('compiled_data.mat'));
+        backup_folder=fullfile(compiled_data_folder,'Compiled_data_backup');
+        fname=uigetfile(backup_folder,...
+            'Select Database To Replace');
+        if (~fname==0)
+            old=load('compiled_data.mat');
+            new=load(fullfile(backup_folder,fname));
+            last_animal=sprintf('%0.0f_%0.0f',old.neuronList(end,1),...
+            old.neuronList(end,2)*100+old.neuronList(end,3));
+            backupfilename=sprintf('compiled_data_backup%s.mat',last_animal);
+            save(fullfile(compiled_data_folder,'Compiled_data_backup',backupfilename),...
+        '-struct','old');
+            save(fullfile(compiled_data_folder,'compiled_data.mat'),'-struct','new');
+            
+        end
         
+    end
 end
