@@ -10,18 +10,19 @@ function [sigs,odors,fire,f]=dispNeuronSignals(nmPeakSig,neuron_fire,thetitle,ne
     
     odors=cellfun(@(x,y)sprintf('%s %s',x,y),odor_concentration_list(i),odor_list(j),...
         'UniformOutput',false);
-    
-%     f(1)=figure;
-%     
-%     h=imagesc(sigs);
-%     ax=gca;
-%     ax.XTick=1:size(sigs,2);
-%     ax.XTickLabel=odors;
-%     ax.XTickLabelRotation=-90;
-%     ax.YTick=1:size(sigs,1);
-%     ax.YTickLabel=neuronID;
-%     colorbar
-%     title(thetitle)
+    if exist('thetitle','var')
+        f(1)=figure;
+
+        h=imagesc(sigs);
+        ax=gca;
+        ax.XTick=1:size(sigs,2);
+        ax.XTickLabel=odors;
+        ax.XTickLabelRotation=-90;
+        ax.YTick=1:size(sigs,1);
+        ax.YTickLabel=neuronID;
+        colorbar
+        title(thetitle)
+    end
 if exist('neuron_fire','var')
     if ~isempty(neuron_fire)
 %         f(2)=figure;
@@ -32,7 +33,8 @@ if exist('neuron_fire','var')
 %         ax.XTickLabelRotation=-90;
 %         ax.YTick=1:size(sigs,1);
 %         title(thetitle)
-        fire=neuron_fire(idx_stack)';
+   %     fire=neuron_fire(idx_stack)';
+        fire=neuron_fire;
     else
     
         fire=[];

@@ -22,17 +22,33 @@ for ii=1:length(unique_odors)
 
 end
 [odor_ordered,~,odor_order]=intersect(odorList,odor','stable');
-figure;
-imagesc(response_mat(odor_order,:))
+response_mat_ordered=[];
+conc_order=[];
+for ii=1:length(odor_ordered)
+    new_conc=find(strcmp(odor,odor_ordered{ii}));
+    conc_order=[conc_order,new_conc];
+    response_mat_ordered=[response_mat_ordered;response_mat(new_conc,:)];  
+end
+f=figure;
+imagesc(response_mat_ordered)
 ax=gca;
 ax.XTick=1:size(response_mat,2);
 ax.YTick=1:size(response_mat,1);
 ax.XTickLabel=infoORNList;
 ax.XTickLabelRotation=-45;
 ax.XAxisLocation='Top';
-ax.YTickLabel=cellfun(@(x,y)sprintf('%s %s',x,y),conc(odor_order)',odor_ordered,...
+ax.YTickLabel=cellfun(@(x,y)sprintf('%s %s',x,y),conc(conc_order)',odor(conc_order)',...
     'UniformOutput',false);
-colormap(jet)
+colormap(jet) 
 colorbar
-
+ax.Units='pixels';
+ratio=size(response_mat,2)/size(response_mat,1);
+ax_width=ax.Position(3);
+fig_width=f.Position(3);
+margins=fig_width-ax_width;
+f.Position(3)=ax_width*ratio+margins;
+ax.Position(3)=ax_width*ratio;
+ax.Units='normalized';
+axis equal; 
+grid on;
 

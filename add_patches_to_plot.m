@@ -1,5 +1,10 @@
 function [patches]=add_patches_to_plot(t,odor_seq,ax,add_legend)
-    load('odor_inf.mat')
+    if ~exist('odor_inf','var')
+        odor_inf=load('odor_inf.mat');
+    end
+    odor_list=odor_inf.odor_list;
+    odor_concentration_list=odor_inf.odor_concentration_list;
+    odor_colormap=odor_inf.odor_colormap;
     %global odor_concentration_list odor_list odor_colormap
     odor_starts=[find(abs(diff(odor_seq))>0)+1];
     odor_ends=[odor_starts(2:end);length(odor_seq)];

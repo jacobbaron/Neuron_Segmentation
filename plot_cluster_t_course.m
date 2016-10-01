@@ -2,6 +2,10 @@ function [f,ax,ax3D]=plot_cluster_t_course(varargin)%tdata,signals,odor_seq,red_
 tabbed=0;
 if isstruct(varargin{1}) %use tsne_data to plot
     tsne_data=varargin{1};
+    if isfield(tsne_data,'odor_list')
+        odor_inf.odor_list=tsne_data.odor_list;
+        odor_inf.odor_concentration_list=tsne_data.odor_concentration_list;
+    end
     tdata=varargin{1}.t;
     odor_seq=varargin{1}.odor_seq;
     red_img=varargin{1}.aligned_red_img;
