@@ -1006,7 +1006,7 @@ ID_tab.Units='pixels';
     function makemovie(varargin)
         mov=animate_3d_stuff2(tsne_data.labels,2:max(tsne_data.labels(:)),...
             tsne_data.cmap(2:end,:),aligned_green_img,aligned_red_img,tsne_data.cluster_signals,...
-            filename,image_times,odor_seq);
+            filename,image_times,tsne_data.odor_conc_inf);
     end
     function save_export(varargin)
         tsne_data.aligned_red_img=aligned_red_img;
