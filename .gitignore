@@ -2,3 +2,7 @@ dep/*
 *.pkl
 *.npy
 *_data.mat
+*.jpg
+Compiled/Compiled_data_backup/*
+*.csv
+*.fig
