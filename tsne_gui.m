@@ -854,6 +854,7 @@ ID_tab.Units='pixels';
                 tsne_data.aligned_green_img=aligned_green_img;
                 tsne_data.filenames={img_data.filename,img_data.filename_log};
                 tsne_data.log_data=log_data;
+                tsne_data.odor_conc_inf=gen_odor_conc_inf(tsne_data.log_data);
                 if ~isfield(tsne_data,'odor_inf')
                     tsne_data.odor_inf=load('odor_inf.mat');
                 end
@@ -984,7 +985,7 @@ ID_tab.Units='pixels';
             odor_inf.odor_concentration_list=tsne_data.odor_concentration_list;
             [~,nm_sig,nmPeakSig,...
                 s2n_mat,s2n_peak_mat,neuron_fire,neuron_fire_mat]=...
-                 calc_nm_sig(odor_seq,tsne_data.cluster_signals,odor_inf);
+                 calc_nm_sig(odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
 
              tsne_data.nmPeakSigMat=nmPeakSig;
              tsne_data.nmSigMat=nm_sig;
@@ -996,7 +997,7 @@ ID_tab.Units='pixels';
              name=strrep(name,'_',' ');
              assignin('base','tsne_data','tsne_data');
              [~,~,fire,peak_sig_fig]=dispNeuronSignals(nmPeakSig,...
-                 neuron_fire,name,tsne_data.neuronID);
+                tsne_data.odor_inf,neuron_fire,name,tsne_data.neuronID);
              
         else
             warndlg('Cluster first!')
@@ -1038,17 +1039,17 @@ ID_tab.Units='pixels';
     end
     function soma_responses(varargin)
         
-        disp_soma_response(tsne_data.odor_seq)
+        disp_soma_response(tsne_data.odor_conc_inf)
     end
 
 %% classifier functions
     function idNeurons(varargin)
         nmPeakSigTestMat=[];
-        odors2exclude_idx=fliplr(selectTestOdorSet(odor_seq));
+        odors2exclude_idx=fliplr(selectTestOdorSet(odor_seq,tsne_data.odor_inf));
         ORNs2use=selectTestORNbasis;
         tsne_data=calculate_cluster_signals(tsne_data,aligned_green_img,odor_seq);
         [~,tsne_data.nmSigMat,tsne_data.nmPeakSigMat]=...
-             calc_nm_sig(odor_seq,tsne_data.cluster_signals);
+             calc_nm_sig(odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
         
         
         

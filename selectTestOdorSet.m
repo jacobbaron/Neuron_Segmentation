@@ -1,8 +1,14 @@
-function [out]=selectTestOdorSet(odor_seq)
+function [out]=selectTestOdorSet(odor_seq,odor_inf)
 %returns out=[odor,conc] indicies of odors not being included in test odor set.
+    if ~exist('odor_inf','var')
+        odor_inf=load('odor_inf.mat');            
+    end
+    odor_list=odor_inf.odor_list;
+    odor_concentration_list=odor_inf.odor_concentration_list;
+    odor_colormap=odor_inf.odor_colormap;
+    
     odors=unique(odor_seq(odor_seq>0),'stable');
-    ld=load('odor_inf.mat');
-    odor_colormap=ld.odor_colormap;
+
     odorconc=cell(length(odors),1);
     for ii=1:length(odors)
         [odorname ,conc,inds(ii,:)]= compute_odor_conc(odors(ii));

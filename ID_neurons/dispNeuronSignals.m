@@ -1,5 +1,11 @@
-function [sigs,odors,fire,f]=dispNeuronSignals(nmPeakSig,neuron_fire,thetitle,neuronID)
-    load odor_inf.mat
+function [sigs,odors,fire,f]=dispNeuronSignals(nmPeakSig,odor_inf,neuron_fire,thetitle,neuronID)
+    if ~exist('odor_inf','var')
+        odor_inf=load('odor_inf.mat');            
+    end
+    odor_list=odor_inf.odor_list;
+    odor_concentration_list=odor_inf.odor_concentration_list;
+    odor_colormap=odor_inf.odor_colormap;
+    
     idx_1d=~all(isnan(nmPeakSig),3);
     [i,j]=find(idx_1d);
     idx=find(repmat(idx_1d,1,1,size(nmPeakSig,3)));

@@ -1,5 +1,7 @@
 function [odors,nm_sig_mat,nm_peak_sig_mat,...
-    s2n_mat,s2n_peak_mat,neuron_fire,neuron_fire_mat]=calc_nm_sig(odor_seq,sig,odor_inf)
+    s2n_mat,s2n_peak_mat,neuron_fire,neuron_fire_mat]=...
+    calc_nm_sig(odor_seq,sig,odor_inf)
+
     if ~exist('odor_inf','var')
         odor_inf=load('odor_inf.mat');            
     end
@@ -57,7 +59,7 @@ function [odors,nm_sig_mat,nm_peak_sig_mat,...
             else
                 odor_period=odor_starts(ii):odor_starts(ii+1)-1;
             end
-            [odors{ii,1}, odors{ii,2}, inds ] = compute_odor_conc(odor_seq(odor_starts(ii)));
+            [odors{ii,1}, odors{ii,2}, inds ] = compute_odor_conc(odor_seq(odor_starts(ii)),odor_inf);
             nm_sig{inds(2),inds(1)} = ( sig{jj}(odor_period) - f0) / f0;
           
             s2n{inds(2),inds(1)}=(sig{jj}(odor_period)-f0)/f0_noise;

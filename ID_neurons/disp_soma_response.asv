@@ -32,7 +32,7 @@ odor_conc_id=[conc_id(odor_conc_tf),odor_id(odor_conc_tf)];
 
 unique_odor_conc_id=fliplr(unique(fliplr(odor_conc_id),'rows'));
 response_mat=zeros(size(unique_odor_conc_id,1),size(dataMean,2));
-for ii=1:length(unique_odor_conc_id)
+for ii=1:length(unique_odors)
     response_mat(ii,:)=dataMean(unique_odor_conc_id(ii,2),:,unique_odor_conc_id(ii,1));
 
 end
@@ -53,11 +53,9 @@ ax.XTickLabel=infoORNList;
 ax.XTickLabelRotation=-45;
 ax.XAxisLocation='Top';
 
-conc_str=cellfun(@(x)num2str(x,'%0.0e'),num2cell(concList),'UniformOutput',false);
+conc_str=num2str(concList)
 
-
-ax.YTickLabel=cellfun(@(x,y)sprintf('%s %s',x,y),...
-    conc_str(unique_odor_conc_id(:,1)),odorList(unique_odor_conc_id(:,2)),...
+ax.YTickLabel=cellfun(@(x,y)sprintf('%s %s',x,y),conc(conc_order)',odor(conc_order)',...
     'UniformOutput',false);
 colormap(jet) 
 colorbar
