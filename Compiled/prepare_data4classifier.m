@@ -1,9 +1,15 @@
-function [training_data]=prepare_data4classifier(compiled_data)
+function [training_data]=prepare_data4classifier(compiled_data,new_odor_inf)
 
 labels=compiled_data.labels;
 neuronList=compiled_data.neuronList;
-nmPeakSig=compiled_data.nmPeakSig;
-
+if exist('new_odor_inf','var')
+    nmPeakSig=updateSigMats(compiled_data.nmPeakSig,compiled_data.odor_inf,...
+        new_odor_inf);
+    odor_inf=new_odor_inf;
+else
+    nmPeakSig=compiled_data.nmPeakSig;
+    odor_inf=compiled_data.odor_inf;
+end
 
 
 % [~,labels]=xlsread('labels.csv');
@@ -23,7 +29,10 @@ labels_idx=cellfun(@(x)ORN2num(x),labels);
 
 
 %% reformat so each neuron is a column vector
-load odor_inf.mat
+odor_list=odor_inf.odor_list;
+odor_concentration_list=odor_inf.odor_concentration_list;
+
+
 [O,C]=meshgrid(1:size(nmPeakSig,2),1:size(nmPeakSig,1));
 OdorConcMat=cellfun(@(x,y)sprintf('%s %s',x,y),odor_concentration_list(C),...
     odor_list(O),'UniformOutput',false);

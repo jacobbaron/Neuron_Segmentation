@@ -17,7 +17,9 @@ odor_conc=odor_conc_inf(not_water,1:2);
 %odor_conc=cellfun(@(x)strrep(x,'10^','e'),odor_conc(:,1),'UniformOutput',false);
 
 conc_num=cellfun(@(x)str2num(x),odor_conc(:,1),'UniformOutput',false);
-conc_num{cellfun(@isempty,conc_num)}=NaN;
+if any(cellfun(@isempty,conc_num))
+    conc_num{cellfun(@isempty,conc_num)}=NaN;
+end
 conc_num_log=(round(log10([conc_num{:}])));
 concListLog=log10(concList);
 

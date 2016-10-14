@@ -1,10 +1,10 @@
 function [odors,nm_sig_mat,nm_peak_sig_mat,...
     s2n_mat,s2n_peak_mat,neuron_fire,neuron_fire_mat]=...
     calc_nm_sig(odor_seq,sig,odor_inf)
-
-    if ~exist('odor_inf','var')
-        odor_inf=load('odor_inf.mat');            
-    end
+% 
+%     if ~exist('odor_inf','var')
+%         odor_inf=load('odor_inf.mat');            
+%     end
     
     odor_list=odor_inf.odor_list;
     odor_concentration_list=odor_inf.odor_concentration_list;

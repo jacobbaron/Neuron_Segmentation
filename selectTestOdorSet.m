@@ -11,7 +11,7 @@ function [out]=selectTestOdorSet(odor_seq,odor_inf)
 
     odorconc=cell(length(odors),1);
     for ii=1:length(odors)
-        [odorname ,conc,inds(ii,:)]= compute_odor_conc(odors(ii));
+        [odorname ,conc,inds(ii,:)]= compute_odor_conc(odors(ii),odor_inf);
        odorconc{ii}=sprintf('%s %s',conc,odorname);
     end
     cmap=odor_colormap(odors,:);

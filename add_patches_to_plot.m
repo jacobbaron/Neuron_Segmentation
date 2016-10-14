@@ -1,4 +1,4 @@
-function [patches]=add_patches_to_plot(odor_conc_inf,ax,add_legend,odor_inf)
+function [patches,leg]=add_patches_to_plot(odor_conc_inf,ax,add_legend,odor_inf)
     if ~exist('odor_inf','var')
         odor_inf=load('odor_inf.mat');
     end

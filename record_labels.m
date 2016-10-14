@@ -1,5 +1,5 @@
 function [neuron_names]=record_labels(idx,neuron_names,tsne_result_peaks)
-load('AveDataMatrix_FromFinalVersionRawData.mat','infoORNList')
+load('AveSomaResponses.mat','infoORNList')
 ornList=[infoORNList,'Unknown'];
 [s,v]=listdlg('PromptString','Which ORN did you find?',...
     'SelectionMode','single',...

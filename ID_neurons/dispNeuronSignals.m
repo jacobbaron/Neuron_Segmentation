@@ -1,7 +1,5 @@
 function [sigs,odors,fire,f]=dispNeuronSignals(nmPeakSig,odor_inf,neuron_fire,thetitle,neuronID)
-    if ~exist('odor_inf','var')
-        odor_inf=load('odor_inf.mat');            
-    end
+
     odor_list=odor_inf.odor_list;
     odor_concentration_list=odor_inf.odor_concentration_list;
     odor_colormap=odor_inf.odor_colormap;
@@ -40,7 +38,7 @@ if exist('neuron_fire','var')
 %         ax.YTick=1:size(sigs,1);
 %         title(thetitle)
    %     fire=neuron_fire(idx_stack)';
-        fire=neuron_fire;
+        fire=neuron_fire(idx_stack)';
     else
     
         fire=[];

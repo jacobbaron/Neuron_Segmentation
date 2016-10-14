@@ -1,13 +1,22 @@
-function [test_data,nmPeakSigMat]=prepare_test_data(nmPeakSigMat,odors2exclude_idx)
-if ~isempty(odors2exclude_idx)
-    nmPeakSigMat(odors2exclude_idx(:,1),odors2exclude_idx(:,2),:)=NaN;
+function [test_data,nmPeakSigMat]=prepare_test_data(nmPeakSigMat,odor_inf,...
+    odors2exclude)
+
+odor_list=odor_inf.odor_list;
+odor_concentration_list=odor_inf.odor_concentration_list;
+
+if ~isempty(odors2exclude)
+    conc2exclude = cellfun(@(x)find(strcmp(x,odor_concentration_list)),...
+        odors2exclude(:,1));
+    odor2exclude = cellfun(@(x)find(strcmp(x,odor_list)),odors2exclude(:,2));
+    
+    nmPeakSigMat(conc2exclude,odor2exclude,:)=NaN;
 end
 
 
 %% reformat so each neuron is a column vector
 
 
-load odor_inf.mat
+
 
 [O,C]=meshgrid(1:size(nmPeakSigMat,2),1:size(nmPeakSigMat,1));
 OdorConcMat=cellfun(@(x,y)sprintf('%s %s',x,y),odor_concentration_list(C),...

@@ -1,4 +1,4 @@
-function add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew,neuronIdx)
+function add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew,neuronIdx,odor_inf)
     [~,date,~]=fileparts(pwd);
     runidx=strfind(filenameNew,'run')+3;
     dotidx=strfind(filenameNew,'.nd2')-1;
@@ -22,9 +22,15 @@ function add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew,neuronIdx)
     switch replace
         case 'Replace'
             %save backup
+            
+            
             if ~all(size(C.nmPeakSig(:,:,1))==size(nmPeakSigNew(:,:,1)))
-                
+                odor_inf_all=reconcile_odor_infs(odor_inf,C.odor_inf);
+                nmPeakSigNew=updateSigMats(nmPeakSigNew,odor_inf,odor_inf_all);
+                C.nmPeakSig=updateSigMats(C.nmPeakSig,C.odor_inf,odor_inf_all);
+                C.odor_inf=odor_inf_all;
             end
+            
             last_animal=sprintf('%0.0f_%0.0f',C.neuronList(end,1),...
                 C.neuronList(end,2)*100+C.neuronList(end,3));
             backupfilename=sprintf('compiled_data_backup%s.mat',last_animal);
@@ -43,7 +49,7 @@ function add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew,neuronIdx)
             C.neuronList=[C.neuronList;neuronsListNew];
             C.labels=[C.labels;labelsNew'];
             C.nmPeakSig=cat(3,C.nmPeakSig,nmPeakSigNew);
-            [C.nmSigList,C.odorsList]=dispNeuronSignals(C.nmPeakSig);
+            [C.nmSigList,C.odorsList]=dispNeuronSignals(C.nmPeakSig,C.odor_inf);
             save(compiled_data_path,'-struct','C');
     end    
     
