@@ -5,7 +5,8 @@ function [patches,leg]=add_patches_to_plot(odor_conc_inf,ax,add_legend,odor_inf)
      odor_list=odor_inf.odor_list;
      odor_concentration_list=odor_inf.odor_concentration_list;
      odor_colormap=odor_inf.odor_colormap;
-     not_water=~strcmp(odor_conc_inf(:,2),'water');
+     not_water=~strcmp(cellfun(@lower,odor_conc_inf(:,2),'UniformOutput',false),...
+         'water');
      t_cum=[0,cumsum([odor_conc_inf{:,3}])];
      
      conc_id=cellfun(@(x)find(strcmp(odor_concentration_list,x)),odor_conc_inf(not_water,1));
@@ -36,10 +37,15 @@ function [patches,leg]=add_patches_to_plot(odor_conc_inf,ax,add_legend,odor_inf)
     end
     odor_conc_str=cellfun(@(x,y)strtrim(sprintf('%s %s',x,y)),odor_conc_inf(:,1),...
         odor_conc_inf(:,2),'UniformOutput',false);
+     if add_legend==1
         [leg,BLicons]=legend(patches,odor_conc_str(not_water),...
         'Location','northeastoutside');
         PatchInLegend = findobj(BLicons, 'type', 'patch');
         set(PatchInLegend, 'facea', 0.4)
-    if ~add_legend
+     elseif add_legend==-1
+        [leg,BLicons]=legend(patches,odor_conc_str(not_water),...
+        'Location','northeastoutside');
+        PatchInLegend = findobj(BLicons, 'type', 'patch');
+        set(PatchInLegend, 'facea', 0.4)
         leg.Visible='off';
-    end
+     end

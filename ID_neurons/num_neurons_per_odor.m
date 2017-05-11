@@ -25,3 +25,6 @@ bar(numNeuronsRespond')
 ax=gca;
 ax.XTickLabel=odors;
 ax.XTickLabelRotation=90;
+hold on
+avg_neurons_respond=mean(numNeuronsRespond);
+er=errorbar(mean(numNeuronsRespond,1),std(numNeuronsRespond)/size(numNeuronsRespond,1),'o');

@@ -1,4 +1,4 @@
-function []=find_coefs_for_ORN(ORNnames,unique_labels,coeffs,odorConcNames)
+function []=find_coefs_for_ORN(ORNnames,unique_labels,coeffs,odorConcNames,odor_inf)
 num_orns=length(ORNnames);
 num_labels=length(unique_labels);
 % ORN2num=containers.Map(unique_labels,1:num_labels);
@@ -17,20 +17,20 @@ vecNeurons=find(ismember(support_vec_names(:,1),ORNnames)&ismember(support_vec_n
 %     vecNeurons=vecNeurons | any(strcmp(support_vec_names,ORNnames(ii)),2);
 % end
 
-figure;
-imagesc(cov(coeffs(vecNeurons,:)))
-ax=gca;
-ax.YTick=1:length(odorConcNames);
-ax.YTickLabel=odorConcNames;
-ax.XTick=1:length(odorConcNames);
-ax.XTickLabel=odorConcNames;
-ax.XTickLabelRotation=90;
-[coef_var,var_idx]=sort(var(coeffs(vecNeurons,:)));
-figure
-barh(coef_var)
-ax=gca;
-ax.YTick=1:length(odorConcNames);
-ax.YTickLabel=odorConcNames(var_idx);
+% figure;
+% imagesc(cov(coeffs(vecNeurons,:)))
+% ax=gca;
+% ax.YTick=1:length(odorConcNames);
+% ax.YTickLabel=odorConcNames;
+% ax.XTick=1:length(odorConcNames);
+% ax.XTickLabel=odorConcNames;
+% ax.XTickLabelRotation=90;
+% [coef_var,var_idx]=sort(var(coeffs(vecNeurons,:)));
+% figure
+% barh(coef_var)
+% ax=gca;
+% ax.YTick=1:length(odorConcNames);
+% ax.YTickLabel=odorConcNames(var_idx);
 
 
 odor_importance=mean(abs(coeffs(vecNeurons,:)),1);

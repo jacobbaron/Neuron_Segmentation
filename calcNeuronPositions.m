@@ -41,13 +41,26 @@ function [neuron_positions,neuron_variance]=calcNeuronPositions(tsne_data,filena
         pixelsize=cellfun(@str2num,answer)';
     end
     red_img_max=max(red_img,[],4);
-    x=linspace(0,pixelsize(1)*size(red_img,2),size(red_img,2));
-    y=linspace(0,pixelsize(2)*size(red_img,1),size(red_img,1));
-    z=linspace(0,pixelsize(3)*size(red_img,3),size(red_img,3));
+    x=linspace(0,pixelsize(1)*size(green_img,2),size(green_img,2));
+    y=linspace(0,pixelsize(2)*size(green_img,1),size(green_img,1));
+    if length(pixelsize) == 2
+        z= 1;
+    else
+        z=linspace(0,pixelsize(3)*size(green_img,3),size(green_img,3));
+    end
     [X,Y,Z]=meshgrid(x,y,z);
     
-    red_img_lin=red_img_max(:);
-    CoM=1/sum(red_img_lin)*[sum(red_img_lin.*X(:)),sum(red_img_lin.*Y(:)),sum(red_img_lin.*Z(:))];
+    
+    if size(red_img,3)==size(green_img,3)
+        red_img_lin=double(red_img_max(:));
+        CoM=1/sum(red_img_lin)*[sum(red_img_lin.*X(:)),sum(red_img_lin.*Y(:)),sum(red_img_lin.*Z(:))];
+    else
+        red_img_2d=max(red_img_max,[],3);
+        red_img_lin=double(red_img_2d(:));
+        [Xlin,Ylin]=meshgrid(x,y);
+        CoM=[sum(red_img_lin.*Xlin(:))/sum(red_img_lin),sum(red_img_lin.*Ylin(:))/sum(red_img_lin),...
+            round(size(green_img,3)*pixelsize(3)/2)];
+    end
     
     X=X-CoM(1);
     Y=Y-CoM(2);

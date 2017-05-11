@@ -24,20 +24,39 @@ SVM_result=load('score_matrix.mat');
 score_matrix=SVM_result.score_matrix;
 figure;
 score_prob=score_matrix./repmat(sum(score_matrix,2),1,size(score_matrix,2));
-h=imagesc(score_prob);
+imagesc(-log(1-score_prob));
+
 ax=gca;
 ax.XTick=1:length(score_matrix);
 ax.YTick=ax.XTick;
 ax.XTickLabel=ORNs2use;
 ax.XTickLabelRotation=90;
 ax.YTickLabel=ORNs2use;
-colorbar
+h=colorbar;
+h.TickLabels=cellfun(@(x)sprintf('%0.3f',x),num2cell(1-exp(-h.Ticks)),'UniformOutput',false);
 % c=logspace(-.2,0,10);
 % clim=[c(1) c(length(c))];
 % colorbar('YTick',log(c),'YTickLabel',round(c,2));
 colormap(jet);
 % caxis(log([c(1),c(end)]));
 %colorbar('FontSize',11,'YTick',log(c),'YTickLabel',round(c,2));
+
+figure;
+imagesc(score_prob);
+
+ax=gca;
+ax.XTick=1:length(score_matrix);
+ax.YTick=ax.XTick;
+ax.XTickLabel=ORNs2use;
+ax.XTickLabelRotation=90;
+ax.YTickLabel=ORNs2use;
+h=colorbar;
+% c=logspace(-.2,0,10);
+% clim=[c(1) c(length(c))];
+% colorbar('YTick',log(c),'YTickLabel',round(c,2));
+colormap(jet);
+
+
 figure
 bar(100*(1-diag(score_prob)))
 ylabel('% incorrect')

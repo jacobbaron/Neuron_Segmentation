@@ -59,7 +59,11 @@ function [odors,nm_sig_mat,nm_peak_sig_mat,...
             else
                 odor_period=odor_starts(ii):odor_starts(ii+1)-1;
             end
+            try
             [odors{ii,1}, odors{ii,2}, inds ] = compute_odor_conc(odor_seq(odor_starts(ii)),odor_inf);
+            catch
+                1;
+            end
             nm_sig{inds(2),inds(1)} = ( sig{jj}(odor_period) - f0) / f0;
           
             s2n{inds(2),inds(1)}=(sig{jj}(odor_period)-f0)/f0_noise;

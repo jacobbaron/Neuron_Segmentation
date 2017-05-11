@@ -1,4 +1,4 @@
-function [f,ax]=plot_cluster_t_course_no3D(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
+function [f,ax,white_bkd]=plot_cluster_t_course_no3D(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
 tabbed=0;
 if isstruct(varargin{1}) %use tsne_data to plot
     tsne_data=varargin{1};
@@ -53,6 +53,7 @@ for ii=1:length(labels2plot)
     h(ii)=plot(tdata,signals{ii},'LineWidth',3);
     h(ii).Color=cmap(ii+1,:);
     ax(ii)=gca;
+    ax(ii).Visible='on';
     ax(ii).YLim=[min(signals{ii}) - 0.1 * max(signals{ii}),max(signals{ii}) + 0.1 * max(signals{ii})];
     xlim([0,max(tdata)]);
     if exist('tsne_data','var')
@@ -61,8 +62,10 @@ for ii=1:length(labels2plot)
         end
     end
     
-    [patches,leg]=add_patches_to_plot(tsne_data.odor_conc_inf,gca,0,tsne_data.odor_inf);
-    delete(leg);
+    [patches]=add_patches_to_plot(tsne_data.odor_conc_inf,gca,0,tsne_data.odor_inf);
+    white_bkd(ii)=patch(ax(ii),[ax(ii).XLim,fliplr(ax(ii).XLim)],...
+        repelem(ax(ii).YLim,2),'white','EdgeColor','none','FaceColor','white','FaceAlpha',0);
+    %delete(leg);
     if ii==1
         
         ylimit=ax(ii).YLim;

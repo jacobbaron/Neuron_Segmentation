@@ -1,4 +1,4 @@
-function [f,ax,ax3D]=plot_cluster_t_course(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
+function [f,ax]=plot_cluster_t_course_no3D(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
 tabbed=0;
 if isstruct(varargin{1}) %use tsne_data to plot
     tsne_data=varargin{1};
@@ -42,12 +42,12 @@ end
 
 [~,name]=fileparts(filename);
 name=strrep(name,'_',' ');
-ratio=4;
+ratio=1;
 for ii=1:length(labels2plot)
     if tabbed
-        subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio],axID(ii))
+        subplot(length(labels2plot),ratio,ii,axID(ii))
     else
-        subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio])
+        subplot(length(labels2plot),ratio,ii)
     end
     
     h(ii)=plot(tdata,signals{ii},'LineWidth',3);
@@ -61,8 +61,8 @@ for ii=1:length(labels2plot)
         end
     end
     
-    patches=add_patches_to_plot(tsne_data.odor_conc_inf,gca,ii==1,tsne_data.odor_inf);
-    
+    [patches,leg]=add_patches_to_plot(tsne_data.odor_conc_inf,gca,ii==1,tsne_data.odor_inf);
+    %delete(leg);
     if ii==1
         
         ylimit=ax(ii).YLim;
@@ -71,6 +71,8 @@ for ii=1:length(labels2plot)
     end
     if ii==length(labels2plot)
         xlabel('Time(sec)')
+    else
+        ax(ii).XTickLabel='';
     end
     if exist('tsne_data','var')
         if isfield(tsne_data,'neuronID')
@@ -82,16 +84,17 @@ for ii=1:length(labels2plot)
     ylab.VerticalAlignment='middle';
     ylab.HorizontalAlignment='right';
     ylab.FontWeight='bold';
-    
+ 
+
 end
-    if tabbed
-        subplot(1,ratio,1,axID(end))
-    else
-        subplot(1,ratio,1)
-    end
-    plot_3d_stuff(labels,labels2plot,red_img,cmap(labels2plot,:));
-    ax3D=gca;
-    ax3D.Position=[.015,-0.27,.3,1.6];
+%     if tabbed
+%         subplot(1,ratio,1,axID(end))
+%     else
+%         subplot(1,ratio,1)
+%     end
+    %plot_3d_stuff(labels,labels2plot,red_img,cmap(labels2plot,:));
+    %ax3D=gca;
+    %ax3D.Position=[.015,-0.27,.3,1.6];
     if exist('axID','var')
         ax=axID;
     end

@@ -22,12 +22,36 @@ function add2TrainingDataset(nmPeakSigNew,filenameNew,labelsNew,neuronIdx,odor_i
     switch replace
         case 'Replace'
             %save backup
+            same_size=all(size(C.nmPeakSig(:,:,1))==size(nmPeakSigNew(:,:,1)));
+            if same_size
+                same_odor=cellfun(@(x,y)strcmp(x,y),...
+                    odor_inf.odor_list,C.odor_inf.odor_list);
+                same_concs=cellfun(@(x,y)strcmp(x,y),...
+                    odor_inf.odor_concentration_list,C.odor_inf.odor_concentration_list);
+                same_odor_inf=all(same_odor) && all(same_concs);
+            else
+                same_odor_inf=0;
+            end
             
-            
-            if ~all(size(C.nmPeakSig(:,:,1))==size(nmPeakSigNew(:,:,1)))
+            if ~same_odor_inf
                 odor_inf_all=reconcile_odor_infs(odor_inf,C.odor_inf);
-                nmPeakSigNew=updateSigMats(nmPeakSigNew,odor_inf,odor_inf_all);
-                C.nmPeakSig=updateSigMats(C.nmPeakSig,C.odor_inf,odor_inf_all);
+                [~,oldOdorList]=dispNeuronSignals(nmPeakSigNew,odor_inf);
+                
+                nmPeakSigNewUpdated=updateSigMats(nmPeakSigNew,odor_inf,odor_inf_all);
+                [~,newOdorList]=dispNeuronSignals(nmPeakSigNewUpdated,odor_inf_all);
+                
+                if ~all(strcmp(sort(oldOdorList),sort(newOdorList)))
+                    error('Problem with matching new odor list to database.\nCheck the code and continue.');
+                end
+                compiled_nmPeakSigNew=updateSigMats(C.nmPeakSig,C.odor_inf,odor_inf_all);
+                [~,newCompiledOdorList]=dispNeuronSignals(compiled_nmPeakSigNew,odor_inf_all);
+                if ~all(strcmp(sort(newCompiledOdorList),sort(C.odorsList)))
+                    error('Problem with matching compiled odor list to new odors.\nCheck the code and continue.');
+                end
+                nmPeakSigNew=nmPeakSigNewUpdated;
+                
+                
+                C.nmPeakSig=compiled_nmPeakSigNew;
                 C.odor_inf=odor_inf_all;
             end
             

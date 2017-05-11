@@ -1,54 +1,11 @@
-function  imshow4D_wheel( Img, disprange )
-%IMSHOW3D displays 3D grayscale images in slice by slice fashion with mouse
-%based slice browsing and window and level adjustment control.
-%
-% Usage:
-% imshow3D ( Image )
-% imshow3D ( Image , [] )
-% imshow3D ( Image , [LOW HIGH] )
-%   
-%    Image:      3D image MxNxK (K slices of MxN images) 
-%    [LOW HIGH]: display range that controls the display intensity range of
-%                a grayscale image (default: the widest available range)
-%
-% Use the scroll bar or mouse scroll wheel to switch between slices. To
-% adjust window and level values keep the mouse right button pressed and
-% drag the mouse up and down (for level adjustment) or right and left (for
-% window adjustment). 
-% 
-% "Auto W/L" button adjust the window and level automatically 
-%
-% While "Fine Tune" check box is checked the window/level adjustment gets
-% 16 times less sensitive to mouse movement, to make it easier to control
-% display intensity rang.
-%
-% Note: The sensitivity of mouse based window and level adjustment is set
-% based on the user defined display intensity range; the wider the range
-% the more sensitivity to mouse drag.
-% 
-% 
-%   Example
-%   --------
-%       % Display an image (MRI example)
-%       load mri 
-%       Image = squeeze(D); 
-%       figure, 
-%       imshow3D(Image) 
-%
-%       % Display the image, adjust the display range
-%       figure,
-%       imshow3D(Image,[20 100]);
-%
-%   See also IMSHOW.
+function  imshow4D_wheel_loadHDF5( fname, disprange )
 
-%
-% - Maysam Shahedi (mshahedi@gmail.com)
-% - Released: 1.0.0   Date: 2013/04/15
-% - Revision: 1.1.0   Date: 2013/04/19
 % 
-
+[piezo,volumes,lasers,t,img_idx,res]=LoadImgProperties(fname);
+volumes=sort(volumes);
+Img=initialize_imgs(volumes,lasers,res);
 sno = size(Img,4);  % number of slices
-S = round(sno/2);
+S = 1;
 zsl = size(Img,3);
 Z = round(zsl/2);
 global InitialCoord;
@@ -134,9 +91,20 @@ else
     WLAdjCoe = (Win + 1)/1024;
     [Rmin Rmax] = WL2R(Win, LevV);
 end
+Img=get_volume(fname,S,lasers,piezo,img_idx,res,volumes,Img);
+
+
+rgb=double(cat(3,squeeze(Img(:,:,Z,S,:)),zeros(res(1),res(2))));
+for ii=1:2
+   if max(max(rgb(:,:,ii)))>0
+        maxRGB(ii)=max(reshape(rgb(:,:,ii),[],1));
+        rgb(:,:,ii)=rgb(:,:,ii)/maxRGB(ii);
+        
+   end
+end
 
 ax=axes('position',[0,0.2,1,0.8]);
-imshow(Img(:,:,Z,S), [Rmin Rmax]);
+image(rgb);
 
 FigPos = get(gcf,'Position');
 S_Pos = [50 45 uint16(FigPos(3)-100)+1 20];
@@ -155,7 +123,7 @@ Btn_Pos = [BtnStPnt 20 100 20];
 ChBx_Pos = [BtnStPnt+110 20 100 20];
 
 if sno > 1
-    shand = uicontrol('Style', 'slider','Min',1,'Max',sno,'Value',S,'SliderStep',[1/(sno-1) 10/(sno-1)],'Position', S_Pos,'Callback', {@SliceSlider, Img});
+    shand = uicontrol('Style', 'slider','Min',1,'Max',sno,'Value',S,'SliderStep',[1/(sno-1) 10/(sno-1)],'Position', S_Pos,'Callback', @SliceSlider);
     stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String',sprintf('t volume %d / %d',S, sno), 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
 else
     stxthand = uicontrol('Style', 'text','Position', Stxt_Pos,'String','2D image', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', SFntSz);
@@ -204,10 +172,16 @@ set(gcf,'ResizeFcn', @figureResized)
     end
 
 % -=< Slice slider callback function >=-
-    function SliceSlider (hObj,event, Img)
+    function SliceSlider (hObj,event)
         S = round(get(hObj,'Value'));
-        set(get(gca,'children'),'cdata',Img(:,:,Z,S))
-        caxis([Rmin Rmax])
+        Img=get_volume(fname,S,lasers,piezo,img_idx,res,volumes,Img);
+
+        rgb=double(cat(3,squeeze(Img(:,:,Z,S,:)),zeros(res(1),res(2))));
+        for ii=1:2
+            rgb(:,:,ii)=rgb(:,:,ii)/maxRGB(ii);
+        end
+        image(gca,rgb)
+        
         if sno > 1
             set(stxthand, 'String', sprintf('t volume %d / %d',S, sno));
         else
@@ -243,7 +217,11 @@ set(gcf,'ResizeFcn', @figureResized)
          else
              set(ztxthand, 'String', '2D image');
          end
-        set(get(gca,'children'),'cdata',Img(:,:,Z,S))
+         rgb=double(cat(3,squeeze(Img(:,:,Z,S,:)),zeros(res(1),res(2))));
+         for ii=1:2
+            rgb(:,:,ii)=rgb(:,:,ii)/maxRGB(ii);
+        end
+        set(get(gca,'children'),'cdata',rgb)
     end
 
 % -=< Mouse button released callback function >=-

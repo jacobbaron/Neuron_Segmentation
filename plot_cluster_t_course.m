@@ -60,8 +60,12 @@ for ii=1:length(labels2plot)
             add_neuron_fire_to_plot(tdata,odor_seq,gca,tsne_data.neuron_fire(ii,:));
         end
     end
-    
-    patches=add_patches_to_plot(tsne_data.odor_conc_inf,gca,ii==1,tsne_data.odor_inf);
+    if ii==1
+        add_legend=1;
+    else
+        add_legend=-1;
+    end
+    patches=add_patches_to_plot(tsne_data.odor_conc_inf,gca,add_legend,tsne_data.odor_inf);
     
     if ii==1
         
