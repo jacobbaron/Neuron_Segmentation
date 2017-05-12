@@ -820,10 +820,7 @@ ID_tab.Units='pixels';
         end
     end
     function get_ROI(varargin)
-        if isempty(aligned_green_img_full) || ~isfield(tsne_data,'cropped_img')
-            msg=msgbox('Full movie does not exist. Reload to adjust ROI');
-            uiwait(msg);
-        else 
+        
             if ~batch
                 if isempty(aligned_green_img_full)
                     aligned_green_img_full = recreate_full_img(tsne_data.aligned_green_img,...
@@ -888,7 +885,10 @@ ID_tab.Units='pixels';
                 tsne_data.background_err = err_fit;
             end
             
-
+    if isempty(aligned_green_img_full)
+        msg=msgbox('Full movie does not exist. Reload to adjust ROI');
+        uiwait(msg);
+    else
         
         
         if ~any(strcmp(varargin,'preloaded'))

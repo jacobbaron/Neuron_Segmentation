@@ -145,7 +145,7 @@ if doublepass==2
     red_stack_aligned=red_stack_cropped;
     green_stack_aligned=green_stack_cropped;
     
-    close(f);
+    %close(f);
     for ii=2:size(red_stack_aligned,4)
         waitbar(0.5+ii/(2*size(red_img,4)),h);
         moving_max=red_stack_cropped_max(:,:,ii);
@@ -181,14 +181,10 @@ if doublepass==2
         end
     end
 end
-min_red_stack_aligned=min(red_stack_aligned,[],4);
-idx=find(min_red_stack_aligned~=0);
-[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
-red_stack_aligned = red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
-green_stack_aligned=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
-
 green_stack_aligned=gpu_medfilt4( green_stack_aligned,'green',2,0);
 red_stack_aligned=gpu_medfilt4(red_stack_aligned,'red',2,0);
+min_red_stack_aligned=min(red_stack_aligned,[],4);
+idx=find(min_red_stack_aligned~=0);
 
 toc
 close(h)

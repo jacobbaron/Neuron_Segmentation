@@ -1,4 +1,13 @@
 function [rect] = keep_in_bounds(rect,img_size)
+        if rect(1)<1
+            rect(3) = rect(3)-(1-rect(1));
+            rect(1)=1;
+        end
+        if rect(2)<1
+            rect(4) = rect(4)-(1-rect(2));
+            rect(2) = 1;
+            
+        end
         if rect(1)>img_size(2)
             rect(1)=img_size(2);
         end
