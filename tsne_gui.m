@@ -820,12 +820,16 @@ ID_tab.Units='pixels';
         end
     end
     function get_ROI(varargin)
-        if isempty(aligned_green_img_full) || ~isfield(tsne_data,'cropped_img')
+        if isempty(aligned_green_img_full) && ~isfield(tsne_data,'cropped_img')
             msg=msgbox('Full movie does not exist. Reload to adjust ROI');
             uiwait(msg);
         else 
             if ~batch
+                try
+                    delete(img)
+                end
                 if isempty(aligned_green_img_full)
+                    tsne_data.aligned_green_img=tsne_data.aligned_green_img+tsne_data.background;
                     aligned_green_img_full = recreate_full_img(tsne_data.aligned_green_img,...
                         tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi);
                     bkgd_img= aligned_green_img_full;                    
@@ -833,16 +837,17 @@ ID_tab.Units='pixels';
                     
                     bkgd_img = aligned_green_img_full;
                 end
-                if isfield(tsne_data,'foreground')
-                        bkgd_img(~tsne_data.foreground) = NaN;
+                if ~isempty(foreground)
+                        bkgd_img(~foreground) = NaN;
                 end
                 max_bkgd_proj=max(mean(bkgd_img,4),[],3);
-                img=imshow(max_bkgd_proj, [min(max_bkgd_proj(:)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
-                img.CDataMapping='direct';
-                cmapsz=size(colormap,1);
-                max_bkgd_proj=max(mean(bkgd_img,4),[],3);
-                img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))*cmapsz/...
-                    (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
+                img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
+                %img.CDataMapping='direct';
+                %cmapsz=size(colormap,1);
+                %max_bkgd_proj=max(mean(bkgd_img,4),[],3);
+                %img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))/...
+                 %   (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
+                %img.CData(max_bkgd_proj==0)=0;
                 ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
                 ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
                 mbox=msgbox('Select regions to exclude from background');
@@ -850,20 +855,24 @@ ID_tab.Units='pixels';
                 bkgd_done=0;
 
                 while ~bkgd_done
-                    rect=keep_in_bounds(round(getrect),size(bkgd_img));
-
+                    rect=keep_in_bounds(round(getrect(ax_foreground)),size(bkgd_img));
+                    
                     bkgd_img(rect(2):rect(2)+rect(4),rect(1):rect(1)+rect(3),:,:)=NaN;
+                    
+                    max_bkgd_proj=max(mean(bkgd_img,4),[],3);
+                    delete(img)
+                    
+                    img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
+                    ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
+                    ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
+                    
                     done=questdlg('Are there more regions to exclude from background?',...
                         'Define Background','Add more','Done','Add more');
                     switch done
                         case 'Done'
                             bkgd_done=1;                                
                     end                
-                    max_bkgd_proj=max(mean(bkgd_img,4),[],3);
-                    img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))*cmapsz/...
-                        (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
-                    ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
-                    ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
+                    
                 end
                 img_size=size(bkgd_img);
                 bkgd_img_mean = mean(bkgd_img(:,:,:,:),4);
@@ -891,12 +900,17 @@ ID_tab.Units='pixels';
 
         
         
-        if ~any(strcmp(varargin,'preloaded'))
+%         if ~any(strcmp(varargin,'preloaded'))
             if ~batch
-                title(ax_foreground,'Select entire ROI')
                 
+                max_proj=max(mean(aligned_green_img_full,4),[],3);
+                delete(img)                
+                img=imshow(max_proj,[min(max_proj(max_proj>0)), max(max_proj(:))],'Parent',ax_foreground);
+                title(ax_foreground,'Select entire ROI')
+                %img.CData=(max_proj-min(max_proj(max_proj>0)))*cmapsz/...
+%                     (max(max_proj(:))-min(max_proj(max_proj>0)));
                 rect=round(getrect(ax_foreground));
-
+                
                 %keep in boundss
                 rect=rect([2,1,4,3]);
                 for ii=1:2
@@ -925,10 +939,10 @@ ID_tab.Units='pixels';
                     1,size(aligned_green_img_full,2)];
                 roi=rng;
             end
-        else
-            choice='Yes';
-            rng=tsne_data.roi;
-        end
+%         else
+%             choice='Yes';
+%             rng=tsne_data.roi;
+%         end
         switch choice
             case 'Yes'             
              
@@ -936,11 +950,9 @@ ID_tab.Units='pixels';
             %image, to keep track of which pixels are cropped regions, save
             %those in a different array. 
             tsne_data.full_img_size=size(aligned_green_img_full);
-            idx_include = sub2ind(tsne_data.full_img_size,...
-                rng(1,1):rng(1,2),rng(2,1):rng(2,2),tsne_data.full_img_size(3),...
-            tsne_data.full_img_size(4));
-            cropped_idx=...
-                ~ismember(idx_include,1:prod(tsne_data.cropped_region.full_img_size));
+            
+            cropped_idx=true(tsne_data.full_img_size);
+            cropped_idx(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:) = false;
             tsne_data.cropped_img = aligned_green_img_full(cropped_idx);
             
             
@@ -948,6 +960,8 @@ ID_tab.Units='pixels';
             tsne_data.aligned_red_img=aligned_red_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
             tsne_data.background = tsne_data.background(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
             tsne_data.background_err = tsne_data.background_err(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+            tsne_data.aligned_green_img=tsne_data.aligned_green_img-repmat(tsne_data.background,1,1,1,...
+                size(tsne_data.aligned_green_img,4));
             %Img4D=tsne_data.aligned_green_img;
             %tsne_data.tsne_data.aligned_red_img=tsne_data.aligned_red_img;
            % tsne_data.aligned_green_img=aligned_green_img;

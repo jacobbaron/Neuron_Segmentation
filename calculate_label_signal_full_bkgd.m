@@ -1,4 +1,4 @@
- function [signal]=calculate_label_signal(img_stack,peak_bkgd,labels,label2ID)
+ function [signal]=calculate_label_signal_full_bkgd(img_stack,peak_bkgd,labels,label2ID)
 
 img_size=size(img_stack);
 
