@@ -38,8 +38,8 @@ tcourse_fig=[];tcourse_ax=[];
 foreground_title=[];
 selected_pts=[];
 batch=0;pca_done=0;
-roi=[];
-nm_sig={};
+roi=[];background_fit=1;
+nm_sig={};bkgd_done=[];
 movie_loaded=0;IDed=0;tsned=0;clustered=0;
 nmPeakSig=[];larva_side=[];orns=[];Img_full=[];Img_max_full=[]; Img_max_xyz=[];
 neuronID=[];neurons2include=[];nmPeakSigTestMat=[];includeInClassifier=[];
@@ -142,7 +142,11 @@ inten_sld=uicontrol('Parent',tsne_tab,'Style','slider','Position',T_slider_pos);
 inten_txt=uicontrol('Parent',tsne_tab,'Style', 'text','Position', T_slider_txt_pos,...
     'BackgroundColor', [0.8 0.8 0.8],...
                  'FontSize', 11);
-
+done_btn_pos = [T_slider_pos(1)-215,T_slider_pos(2),200,T_slider_pos(4)];
+             
+bkgd_done_btn = uicontrol('Parent',tsne_tab,'Style','pushbutton',...
+    'Position',done_btn_pos,'String','Done selecting',...
+    'BackgroundColor','r','FontSize',15);
 %Number of iterations box
 num_iter_txt = uicontrol('Parent',tsne_tab,'Style', 'text',...
     'Position', num_iter_txt_pos,...
@@ -463,9 +467,9 @@ ID_tab.Units='pixels';
             undo_item.Enable='Off';
             display_foreground;
             plot_tsne_clusters;
-            if ~isfield(tsne_data,'background_level')
-                tsne_data.background_level=compute_background(foreground,tsne_data.aligned_green_img);
-            end
+            %if ~isfield(tsne_data,'background_level')
+            %    tsne_data.background_level=compute_background(foreground,tsne_data.aligned_green_img);
+            %end
             try
                 close(fLeg);
             end
@@ -813,16 +817,86 @@ ID_tab.Units='pixels';
         end
     end
     function get_ROI(varargin)
-        if isempty(aligned_green_img_full)
-            msg=msgbox('Full movie does not exist. Reload to adjust ROI');
-            uiwait(msg);
-        else
+        
+            if ~batch
+                if isempty(aligned_green_img_full)
+                    bkgd_img= tsne_data.aligned_green_img;
+                    
+                else
+                    bkgd_img = aligned_green_img_full;
+                end
+                if isfield(tsne_data,'foreground')
+                        bkgd_img(~tsne_data.foreground) = NaN;
+                end
+                if isfield(tsne_data,'background')
+                    tsne_data.aligned_green_img = tsne_data.aligned_green_img + ...
+                        repmat(tsne_data.background,1,1,1,size(tsne_data.aligned_green_img,4));   
+                end
+                max_bkgd_proj=max(mean(bkgd_img,4),[],3);
+                img=imshow(max_bkgd_proj, [min(max_bkgd_proj(:)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
+                img.CDataMapping='direct';
+                cmapsz=size(colormap,1);
+                max_bkgd_proj=max(mean(bkgd_img,4),[],3);
+                img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))*cmapsz/...
+                    (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
+                ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
+                ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
+                mbox=msgbox('Select regions to exclude from background');
+                waitfor(mbox);
+                bkgd_done=0;
+
+                while ~bkgd_done
+                rect=keep_in_bounds(round(getrect),size(bkgd_img));
+
+                bkgd_img(rect(2):rect(2)+rect(4),rect(1):rect(1)+rect(3),:,:)=NaN;
+                done=questdlg('Are there more regions to exclude from background?',...
+                    'Define Background','Add more','Done','Add more');
+                switch done
+                    case 'Done'
+                        bkgd_done=1;                                
+                end
+                
+                max_bkgd_proj=max(mean(bkgd_img,4),[],3);
+                img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))*cmapsz/...
+                    (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
+                ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
+                ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
+            end
+                img_size=size(bkgd_img);
+               bkgd_img_mean = mean(bkgd_img(:,:,:,:),4);
+               [Xmesh,Ymesh,Zmesh]=meshgrid(1:img_size(2),1:img_size(1),1:img_size(3));
+               notnan=~isnan(bkgd_img_mean);
+                Xflat=Xmesh(notnan);
+                Yflat=Ymesh(notnan);
+                Zflat=Zmesh(notnan);
+                bkgd_img_mean_flat=bkgd_img_mean(notnan);
+
+                A=[ones(size(Xflat)),Xflat,Yflat,Zflat];
+                [b,std_b] = lscov(A,bkgd_img_mean_flat);
+                roi_size=size(bkgd_img);
+                fit=zeros(roi_size(1:3));
+
+                Afit=[ones(size(Xmesh(:))),Xmesh(:),Ymesh(:),Zmesh(:)];
+                fit(:)=Afit*b;
+                err_fit=ones(size(fit));
+                err_fit = sqrt(std_b(1).^2 + (Xmesh.*std_b(2)).^2 + (Ymesh.*std_b(3)).^2 ...
+                    + (Zmesh.*std_b(4)).^2);
+                tsne_data.background = fit;
+                tsne_data.background_err = err_fit;
+               if any(strcmp(varargin,'preloaded'))
+                tsne_data.aligned_green_img = tsne_data.aligned_green_img-...
+                    repmat(tsne_data.background,1,1,1,roi_size(4));   
+               end
+            end
+            
+    if isempty(aligned_green_img_full)
+        msg=msgbox('Full movie does not exist. Reload to adjust ROI');
+        uiwait(msg);
+    else
+        
+        
         if ~any(strcmp(varargin,'preloaded'))
             if ~batch
-                max_green_proj=max(max(aligned_green_img_full,[],3),[],4);
-                img=imshow(max_green_proj, [min(max_green_proj(:)) max(max_green_proj(:))],'Parent',ax_foreground);
-                ax_foreground.XLim=[0,size(max_green_proj,2)];
-                ax_foreground.YLim=[0,size(max_green_proj,1)];
                 title(ax_foreground,'Select entire ROI')
             
                 rect=round(getrect(ax_foreground));
@@ -861,8 +935,18 @@ ID_tab.Units='pixels';
         end
         switch choice
             case 'Yes'             
+             
+            
             tsne_data.aligned_green_img=aligned_green_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
             tsne_data.aligned_red_img=aligned_red_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+            tsne_data.background = tsne_data.background(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+            tsne_data.background_err = tsne_data.background_err(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+            if ~batch
+                
+                tsne_data.aligned_green_img = tsne_data.aligned_green_img-...
+                    repmat(tsne_data.background,1,1,1,roi_size(4));   
+                
+            end
             %Img4D=tsne_data.aligned_green_img;
             %tsne_data.tsne_data.aligned_red_img=tsne_data.aligned_red_img;
            % tsne_data.aligned_green_img=aligned_green_img;
