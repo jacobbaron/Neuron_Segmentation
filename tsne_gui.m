@@ -406,9 +406,14 @@ ID_tab.Units='pixels';
             if ~isempty(fname)
 
                ld=load(fname);
+               
                try
                    %delete_figs;
-                   tsne_data=ld.tsne_data;
+                   if isfield(ld,'tsne_data')
+                        tsne_data=ld.tsne_data;
+                   else
+                       tsne_data=ld;
+                   end
                    movie_loaded=1;tsned=1;clustered=1;
                    erase_ID_tab;
                catch
@@ -1518,7 +1523,7 @@ ID_tab.Units='pixels';
                     msgbox('Could Not Save Figure Successfully');
                 end
             end
-            save(strcat(filename,'_tsne_data.mat'),'tsne_data')
+            save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
             saved=1;
             if ~batch
                 sv=msgbox('Data Saved!');            

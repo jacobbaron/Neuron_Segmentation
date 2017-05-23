@@ -406,6 +406,7 @@ ID_tab.Units='pixels';
             if ~isempty(fname)
 
                ld=load(fname);
+               if isfield(ld,'t
                try
                    %delete_figs;
                    tsne_data=ld.tsne_data;
@@ -564,7 +565,7 @@ ID_tab.Units='pixels';
             run_pca;
         end
         cmap_full=[cmap1;cmap];
-        colormap(Zmeshforeground,cmap_full)
+        colormap(ax_foreground,cmap_full)
         T=hObj.Value;
         foreground_img=dist>T;
         lb.CData=foreground_img(:,:,Z)+length(cmap1);
@@ -841,12 +842,12 @@ ID_tab.Units='pixels';
                         bkgd_img(~foreground) = NaN;
                 end
                 max_bkgd_proj=max(mean(bkgd_img,4),[],3);
-                img=imshow(max_bkgd_proj, [min(max_bkgd_proj(:)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
+                img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
                 %img.CDataMapping='direct';
                 %cmapsz=size(colormap,1);
                 %max_bkgd_proj=max(mean(bkgd_img,4),[],3);
-                img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))/...
-                    (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
+                %img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))/...
+                 %   (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
                 %img.CData(max_bkgd_proj==0)=0;
                 ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
                 ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
@@ -860,8 +861,9 @@ ID_tab.Units='pixels';
                     bkgd_img(rect(2):rect(2)+rect(4),rect(1):rect(1)+rect(3),:,:)=NaN;
                     
                     max_bkgd_proj=max(mean(bkgd_img,4),[],3);
-                    img.CData=(max_bkgd_proj-min(max_bkgd_proj(max_bkgd_proj>0)))/...
-                        (max(max_bkgd_proj(:))-min(max_bkgd_proj(max_bkgd_proj>0)));
+                    delete(img)
+                    
+                    img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
                     ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
                     ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
                     
@@ -901,10 +903,13 @@ ID_tab.Units='pixels';
         
 %         if ~any(strcmp(varargin,'preloaded'))
             if ~batch
-                title(ax_foreground,'Select entire ROI')
+                
                 max_proj=max(mean(aligned_green_img_full,4),[],3);
-                img.CData=(max_proj-min(max_proj(max_proj>0)))*cmapsz/...
-                    (max(max_proj(:))-min(max_proj(max_proj>0)));
+                delete(img)                
+                img=imshow(max_proj,[min(max_proj(max_proj>0)), max(max_proj(:))],'Parent',ax_foreground);
+                title(ax_foreground,'Select entire ROI')
+                %img.CData=(max_proj-min(max_proj(max_proj>0)))*cmapsz/...
+%                     (max(max_proj(:))-min(max_proj(max_proj>0)));
                 rect=round(getrect(ax_foreground));
                 
                 %keep in boundss
@@ -956,7 +961,8 @@ ID_tab.Units='pixels';
             tsne_data.aligned_red_img=aligned_red_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
             tsne_data.background = tsne_data.background(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
             tsne_data.background_err = tsne_data.background_err(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
-            tsne_data.aligned_green_img=tsne_data.aligned_green_img-tsne_data.background;
+            tsne_data.aligned_green_img=tsne_data.aligned_green_img-repmat(tsne_data.background,1,1,1,...
+                size(tsne_data.aligned_green_img,4));
             %Img4D=tsne_data.aligned_green_img;
             %tsne_data.tsne_data.aligned_red_img=tsne_data.aligned_red_img;
            % tsne_data.aligned_green_img=aligned_green_img;
@@ -1513,7 +1519,7 @@ ID_tab.Units='pixels';
                     msgbox('Could Not Save Figure Successfully');
                 end
             end
-            save(strcat(filename,'_tsne_data.mat'),'tsne_data')
+            save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
             saved=1;
             if ~batch
                 sv=msgbox('Data Saved!');            
