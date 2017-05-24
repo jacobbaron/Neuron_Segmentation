@@ -1148,6 +1148,7 @@ ID_tab.Units='pixels';
             dist=tsne_data.dist;
             max_bkgd_proj=max(tsne_data.mean_green_img_t,[],3);
             bkgd_img = mean_green_img_t;
+            Z = round(size(mean_green_img_t)/2); 
             get_ROI;
         else
             batch=0;
@@ -1699,9 +1700,14 @@ ID_tab.Units='pixels';
                 'dist','background','background_err','foreground','roi','-append');
             %restore button;
            save_export_btn.String = 'Save to file...'; 
-                
+           if strcmp(more_roi,'Yes')     
+                get_ROI;
+           else
+           
             ii_glob = ii_glob+1;
             increment_ii_glob;
+           end
+            
         end        
     end
     function soma_responses(varargin)
