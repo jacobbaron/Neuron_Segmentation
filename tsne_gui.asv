@@ -2,7 +2,7 @@ function  tsne_gui()
 %
 
 %% Initialize a bunch of globals
-peak_sig_fig=[];log_data=[];
+peak_sig_fig=[];
 Img4D=[];saved=1;
 leg=[];scale_factor=[];
 foreground=[];
@@ -23,14 +23,12 @@ imax=[];
 T=[];
 dist=[];
 min_slider=[];
-max_slider=[];fname=[];
-odor_seq=[];fnamelog=[];
+max_slider=[];fname=[];fnamelog=[];
 lb=[];
 aligned_green_img=[];
 aligned_red_img=[];
 aligned_green_img_full=[];
 aligned_red_img_full=[];
-image_times=[];
 tsne_data=[];old_tsne_data=[];
 filename=[];old_tsne_alpha=[];ii_glob=0;ii_glob_max=0; f_list_glob=[];
 tsne_title=[];
@@ -46,7 +44,7 @@ neuronID=[];neurons2include=[];nmPeakSigTestMat=[];includeInClassifier=[];
 ax_NID= gobjects(0);ax3D= gobjects(0);submit_button=[];ORNMenu=[];include_chkbox=[];
 ax_xyz= gobjects(0);ax_xz= gobjects(0);ax_yz= gobjects(0);tsne_alpha=[];
 confirmed=[];maxinten_t_hand=gobjects(0);ax_compare=gobjects(0);white_bkd=gobjects(0);
-odor_inf=[];compare_chkbox=gobjects(0);tline_compare=gobjects(0);maxinten_t_text=gobjects(0);
+compare_chkbox=gobjects(0);tline_compare=gobjects(0);maxinten_t_text=gobjects(0);
 fLeg=gobjects(0);compareable=0;reset_compare_btn=gobjects(0);
 Img_yz=[];Img_xz=[];Img_xy=[];Img_yz_full=[];Img_xz_full=[];Img_xy_full=[];
 
@@ -437,7 +435,6 @@ ID_tab.Units='pixels';
              end
              
             %filename=img_data.filename;
-            odor_inf=tsne_data.odor_inf;
             setup_figures;
             %aligned_green_img=tsne_data.aligned_green_img;
             if isfield(tsne_data,'which_side')
@@ -465,7 +462,6 @@ ID_tab.Units='pixels';
 
             end
             tsne_alpha=ones(length(tsne_data.cluster_signals),1);
-            image_times=tsne_data.t;
             display_movie;
 
             aligned_green_img_full=[];
@@ -530,12 +526,12 @@ ID_tab.Units='pixels';
                     end
                     if strfind(fnamelog,'.mat')>0
                         ld=load(fnamelog);
-                        log_data=ld.log_data;
+                        tsne_data.log_data=ld.log_data;
                     end
                     tsne_data=struct;
-                    odor_inf=load('odor_inf.mat');
+                    tsne_data.odor_inf=load('odor_inf.mat');
                     erase_ID_tab;
-                    odor_seq=img_data.odor_seq;
+                    tsne_data.odor_seq=img_data.odor_seq;
                     tsne_data.t=img_data.t;
                      if isfield(img_data,'pixelSize')
                         tsne_data.pixelSize=img_data.pixelSize;
@@ -579,7 +575,7 @@ ID_tab.Units='pixels';
         cmap_full=[cmap1;cmap];
         colormap(ax_foreground,cmap_full)
         T=hObj.Value;
-        foreground_img=dist>T;
+        foreground_img=tsne_data.dist>T;
         lb.CData=foreground_img(:,:,Z)+length(cmap1);
         
         [~,name,~] = fileparts(filename) ;
@@ -619,7 +615,7 @@ ID_tab.Units='pixels';
         else
             set(stxthand, 'String', '2D image');
         end
-        [odor,conc]=compute_odor_conc(odor_seq(S),odor_inf);
+        [odor,conc]=compute_odor_conc(tsne_data.odor_seq(S),tsne_data.odor_inf);
         
             t=tsne_data.t;
         
@@ -785,8 +781,8 @@ ID_tab.Units='pixels';
             err=0;
             %try
                 
-                odor_seq=img_data.odor_seq;
-                image_times=img_data.t;
+                tsne_data.odor_seq=img_data.odor_seq;
+                tsne_data.t=img_data.t;
                 filename=img_data.filename; 
                 %red_img=img_data.img_stacks{2};
                 r_idx=find(~squeeze(all(all(all(img_data.img_stacks{2}==0,4),2),1)));
@@ -974,7 +970,6 @@ ID_tab.Units='pixels';
                 %Img4D=tsne_data.aligned_green_img;
                 %tsne_data.tsne_data.aligned_red_img=tsne_data.aligned_red_img;
                % tsne_data.aligned_green_img=aligned_green_img;
-                %tsne_data.t=image_times;
 
                 ax_foreground.XLim=[0,size(tsne_data.aligned_green_img,2)];
                 ax_foreground.YLim=[0,size(tsne_data.aligned_green_img,1)];
@@ -986,8 +981,8 @@ ID_tab.Units='pixels';
                 close(waiting);
             else
                 1;
-                dist = dist(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
-                tsne_data.dist = dist;
+                
+                tsne_data.dist = dist(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
                 tsne_data.aligned_green_img = mean_green_img_t(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
                 prepare_foreground;
                 S=1;
@@ -1031,18 +1026,18 @@ ID_tab.Units='pixels';
         coeffs=zeros(size(Img4D_list,1),pca_num);
         coeffs(nonzeros,:)=pca(double(Img4D_list_nonzero)',...
             'NumComponents',pca_num);
-            dist=reshape(sqrt(sum(coeffs.^2,2)),...
+            tsne_data.dist=reshape(sqrt(sum(coeffs.^2,2)),...
                 size(tsne_data.aligned_green_img,1),...
                 size(tsne_data.aligned_green_img,2),...
                 size(tsne_data.aligned_green_img,3));
-            min_slider=min(dist(:));
-            max_slider=max(dist(:));
-        T=min(dist(:));  
-         foreground_img=dist>T;
+            min_slider=min(tsne_data.dist(:));
+            max_slider=max(tsne_data.dist(:));
+        T=min(tsne_data.dist(:));  
+         foreground_img=tsne_data.dist>T;
         step=(max_slider-min_slider)/1000;
         while length(find(foreground_img))>=2000
             T=T+step;
-            foreground_img=dist>T;
+            foreground_img=tsne_data.dist>T;
         end
         
         foreground=foreground_img;
@@ -1068,14 +1063,14 @@ ID_tab.Units='pixels';
                 size(tsne_data.aligned_green_img,3));
     end
     function prepare_foreground(varargin)
-        min_slider=min(dist(:));
-        max_slider=max(dist(:));
-        T=min(dist(:));  
-        foreground_img=dist>T;
+        min_slider=min(tsne_data.dist(:));
+        max_slider=max(tsne_data.dist(:));
+        T=min(tsne_data.dist(:));  
+        foreground_img=tsne_data.dist>T;
         step=(max_slider-min_slider)/1000;
         while length(find(foreground_img))>=2000
             T=T+step;
-            foreground_img=dist>T;
+            foreground_img=tsne_data.dist>T;
         end
         
         foreground=foreground_img;
@@ -1107,12 +1102,18 @@ ID_tab.Units='pixels';
             end
               
     end
+
+%new batch importing functions 20170524
     function batch_alignment(varargin)
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
+         
+         %get all the log mat files in current folder
+         logMatFileList = ListMatLogFiles( pwd );
+         
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
-                f_list_log=uigetfile('log_*','MultiSelect','on');
-                
+                %f_list_log=uigetfile('log_*','MultiSelect','on');
+                f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
                     for ii=1:length(f_list)
                         fname=f_list{ii};
                         fnamelog=f_list_log{ii};
@@ -1121,13 +1122,15 @@ ID_tab.Units='pixels';
                         display_movie;
                         run_pca_batch;
                         tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
-                        save(strcat(fname,'_aligned.mat'),'-struct','tsne_data');
+                        mkdir('aligned');
+                        aligned_file = fullfile('aligned',strcat(fname,'_aligned.mat'))
+                        save(aligned_file,'-struct','tsne_data');
                         batch=0;
                     end
          end
     end
     function batch_ROI_foreground(varargin)
-        f_list_glob = uigetfile('*_aligned.mat','MultiSelect','on');  
+        f_list_glob = uigetfile('.\aligned\*_aligned.mat','MultiSelect','on');  
         if ischar(f_list_glob)
             f_list_glob={f_list_glob};
         end
@@ -1143,11 +1146,13 @@ ID_tab.Units='pixels';
     end
     function increment_ii_glob(varargin)
         if ii_glob<=ii_glob_max
-            tsne_data=load(f_list_glob{ii_glob},'mean_green_img_t','dist','filenames');                
+            fnamez = fullfile('.\aligned\',f_list_glob{ii_glob});
+            tsne_data=load(fnamez,'mean_green_img_t','dist','filenames');                
             mean_green_img_t = tsne_data.mean_green_img_t;
             dist=tsne_data.dist;
             max_bkgd_proj=max(tsne_data.mean_green_img_t,[],3);
             bkgd_img = mean_green_img_t;
+            Z = round(size(mean_green_img_t,3)/2); 
             get_ROI;
         else
             batch=0;
@@ -1156,23 +1161,32 @@ ID_tab.Units='pixels';
             
     end
     function batch_run_tsne(varargin)
-        f_list = uigetfile('*_prepared.mat','MultiSelect','on');  
+        f_list = uigetfile('.\prepared\*_prepared.mat','MultiSelect','on');  
         if ischar(f_list)
             f_list={f_list};
         end
         for ii=1:length(f_list)
-            tsne_data=load(f_list{ii});
+            file2load = fullfile('prepared',f_list{ii});
+            tsne_data=load(file2load);
             aligned_green_img_full = tsne_data.aligned_green_img;
             aligned_red_img_full = tsne_data.aligned_red_img;
             foreground = tsne_data.foreground;
-            
+            foreground_img = foreground;
             crop_green_img;
-        1;
+            Z = round(size(tsne_data.aligned_green_img,3)/2);
+            S=1;
+            display_movie;
+            display_foreground;
+            batch=1;
+            run_everything;
+            
+            save_export;
         
         
+            fprintf('Completed t-SNE for %s',tsne_data.filenames{1});
         
         end 
-        
+        msgbox('Done with 
         
         
         
@@ -1249,7 +1263,7 @@ ID_tab.Units='pixels';
         end
     end
     function display_foreground(varargin)
-        lb=imshow(foreground_img(:,:,Z), [Rmin Rmax],'Parent',ax_foreground);
+        lb=imshow(foreground(:,:,Z), [Rmin Rmax],'Parent',ax_foreground);
         lb.CDataMapping='direct';
         lb.CData=foreground_img(:,:,Z)+length(cmap1);
         [~,name]=fileparts(tsne_data.filenames{1});
@@ -1276,7 +1290,7 @@ ID_tab.Units='pixels';
         foreground=foreground_img;
         max_iter=str2num(num_iter_box.String);
        tsne_data_no_cluster=CIA_TSNE(tsne_data.aligned_green_img,foreground,...
-           odor_seq,'tsne_iter',max_iter);
+           tsne_data.odor_seq,'tsne_iter',max_iter);
        tsne_data=catstruct(tsne_data,tsne_data_no_cluster);
         plot(tsne_ax,tsne_data.tsne_result(:,1),...
             tsne_data.tsne_result(:,2),'.')
@@ -1291,21 +1305,19 @@ ID_tab.Units='pixels';
             Alpha=str2num(alpha_box.String);
             k=str2num(k_box.String);
             tsne_data=CIA_LSBDC(tsne_data,tsne_data.aligned_green_img,...
-                odor_seq,'alpha',Alpha,'k',k);
+                tsne_data.odor_seq,'alpha',Alpha,'k',k);
 
             tsne_data.neuronID=cellfun(@num2str,...
                 num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
-            tsne_data.t=image_times;
-            tsne_data.odor_seq=odor_seq;
+            
             %tsne_data.aligned_red_img=aligned_red_img;
            % tsne_data.aligned_green_img=aligned_green_img;
 
-            tsne_data.log_data=log_data;
             tsne_data.odor_conc_inf=gen_odor_conc_inf(tsne_data.filenames{2});
 %                 if ~isfield(tsne_data,'odor_inf')
 %                     tsne_data.odor_inf=load('odor_inf.mat');
 %                 end
-            tsne_data.odor_inf=odor_inf;
+            
             tsne_alpha=ones(length(unique(tsne_data.labels(tsne_data.labels>1))),1);
             plot_tsne_clusters;
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);
@@ -1597,12 +1609,12 @@ ID_tab.Units='pixels';
 %                 close(tcourse_fig);
 %                 close(peak_sig_fig);
 %             end
-            tsne_data=calculate_cluster_signals(tsne_data,tsne_data.aligned_green_img,odor_seq);
+            tsne_data=calculate_cluster_signals(tsne_data,tsne_data.aligned_green_img,tsne_data.odor_seq);
 %             odor_inf.odor_list=tsne_data.odor_inf.odor_list;
 %             odor_inf.odor_concentration_list=tsne_data.odor_inf.odor_concentration_list;
             [~,nm_sig,nmPeakSig,...
                 s2n_mat,s2n_peak_mat,neuron_fire,neuron_fire_mat]=...
-                 calc_nm_sig(odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
+                 calc_nm_sig(tsne_data.odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
 
              tsne_data.nmPeakSigMat=nmPeakSig;
              tsne_data.nmSigMat=nm_sig;
@@ -1632,17 +1644,16 @@ ID_tab.Units='pixels';
         if ~bkgd_ROI_saving %different mode for saving background only (when doing batch things)
             %tsne_data.aligned_red_img=aligned_red_img;
             %tsne_data.aligned_green_img=aligned_green_img;
-            tsne_data.odor_seq=odor_seq;
             tsne_data.nmPeakSigMat=nmPeakSig;
             tsne_data.nmSigMat=nm_sig;
             if ~isempty(roi)
                 tsne_data.roi=roi;
             end
-            tsne_data.t=image_times;
+            
 
-
+            
             [tsne_data.neuron_CoM,tsne_data.neuron_var]=calcNeuronPositions(tsne_data);
-
+            filename = tsne_data.filenames{1};
             if ~batch
             [fig_name,pname]=uiputfile('*.fig','Enter figure 1 name',strcat(filename,'_tsne_result.fig'));
             [fig_name2,pname]=uiputfile('*.fig','Enter figure 2 name',strcat(filename,'_nm_sigs.fig'));
@@ -1670,38 +1681,49 @@ ID_tab.Units='pixels';
 
             end
         else %means we are in batch mode and saving the ROI and forground pixels.
-            more_roi = questdlg('Want to select another ROI?','Yes','No','No');
+            more_roi = questdlg('Want to select another ROI?','Save more ROIs','Yes','No','No');
             
             tsne_data.foreground = foreground_img;
             save_export_btn.String = 'Saving...';
             save_export_btn.BackgroundColor = [0.94,0.94,0.94];
             switch more_roi
-                case 'yes'
+                case 'Yes'
                 if isempty(batch_fname_idx)
                     batch_fname_idx=0;
                 end
                 batch_fname_idx= batch_fname_idx+1;
                     
-                filenamez = strcat(tsne_data.filenames{1},'_prepared_',num(batch_fname_idx),'.mat');
-                case 'no'
+                filenamez = strcat(tsne_data.filenames{1},'_prepared_',num2str(batch_fname_idx),'.mat');
+                case 'No'
                     if isempty(batch_fname_idx)                        
                         filenamez = strcat(tsne_data.filenames{1},'_prepared.mat');
                     else
                         batch_fname_idx= batch_fname_idx+1;                    
-                        filenamez = strcat(tsne_data.filenames{1},'_prepared_',str2num(batch_fname_idx),'.mat');
+                        filenamez = strcat(tsne_data.filenames{1},'_prepared_',num2str(batch_fname_idx),'.mat');
                         batch_fname_idx=[];
                     end
             end
-           copyfile(strcat(tsne_data.filenames{1},'_aligned.mat'),filenamez);
+             mkdir('prepared');
+             [filedir,name]= fileparts(strcat(tsne_data.filenames{1},'_aligned.mat'));
+            aligned_file = fullfile(filedir,'aligned',[name,'.mat']); 
+             [filedir,name]= fileparts(filenamez);
+            prepared_file = fullfile(filedir,'prepared',[name,'.mat']);
+            
+           copyfile(aligned_file,prepared_file);
            
            bkgd_ROI_saving = 0;
-            save(strcat(tsne_data.filenames{1},'_prepared.mat'),'-struct','tsne_data',...
+            save(prepared_file,'-struct','tsne_data',...
                 'dist','background','background_err','foreground','roi','-append');
             %restore button;
            save_export_btn.String = 'Save to file...'; 
-                
+           if strcmp(more_roi,'Yes')     
+                get_ROI;
+           else
+           
             ii_glob = ii_glob+1;
             increment_ii_glob;
+           end
+            
         end        
     end
     function soma_responses(varargin)
@@ -1712,11 +1734,11 @@ ID_tab.Units='pixels';
 %% classifier functions
     function idNeurons(varargin)
         nmPeakSigTestMat=[];
-        odors2exclude_idx=fliplr(selectTestOdorSet(odor_seq,tsne_data.odor_inf));
+        odors2exclude_idx=fliplr(selectTestOdorSet(tsne_data.odor_seq,tsne_data.odor_inf));
         ORNs2use=selectTestORNbasis;
-        tsne_data=calculate_cluster_signals(tsne_data,tsne_data.aligned_green_img,odor_seq);
+        tsne_data=calculate_cluster_signals(tsne_data,tsne_data.aligned_green_img,tsne_data.odor_seq);
         [~,tsne_data.nmSigMat,tsne_data.nmPeakSigMat]=...
-             calc_nm_sig(odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
+             calc_nm_sig(tsne_data.odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
         
         odors2exclude(:,1)=tsne_data.odor_inf.odor_concentration_list...
             (odors2exclude_idx(:,1));
