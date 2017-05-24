@@ -1118,6 +1118,7 @@ ID_tab.Units='pixels';
                         fname=f_list{ii};
                         fnamelog=f_list_log{ii};
                         batch=1;
+                        tsne_data=struct;
                         importimg;
                         display_movie;
                         run_pca_batch;
