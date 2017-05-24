@@ -1107,12 +1107,18 @@ ID_tab.Units='pixels';
             end
               
     end
+
+%new batch importing functions 20170524
     function batch_alignment(varargin)
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
+         
+         %get all the log mat files in current folder
+         logMatFileList = ListMatLogFiles( pwd );
+         
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
-                f_list_log=uigetfile('log_*','MultiSelect','on');
-                
+                %f_list_log=uigetfile('log_*','MultiSelect','on');
+                f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
                     for ii=1:length(f_list)
                         fname=f_list{ii};
                         fnamelog=f_list_log{ii};
