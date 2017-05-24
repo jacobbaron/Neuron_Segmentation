@@ -32,9 +32,9 @@ aligned_green_img_full=[];
 aligned_red_img_full=[];
 image_times=[];
 tsne_data=[];old_tsne_data=[];
-filename=[];old_tsne_alpha=[];
+filename=[];old_tsne_alpha=[];ii_glob=0;ii_glob_max=0; f_list_glob=[];
 tsne_title=[];
-tcourse_fig=[];tcourse_ax=[];
+tcourse_fig=[];tcourse_ax=[];batch_fname_idx=[];
 foreground_title=[];
 selected_pts=[];bkgd_ROI_saving = 0;
 batch=0;pca_done=0;max_bkgd_proj=[];bkgd_img=[];mean_green_img_t=[];
@@ -633,7 +633,7 @@ ID_tab.Units='pixels';
     function mouseScroll (object, eventdata)
         for ii=1:length(object.Children)
            if strcmp(object.Children(ii).Type,'uitabgroup')
-               if strcmp(object.Children(5).SelectedTab.Title,'t-SNE')
+               if strcmp(object.Children(ii).SelectedTab.Title,'t-SNE')
                     UPDN = eventdata.VerticalScrollCount;
                     Z = Z - UPDN;
                     if (Z < 1)
@@ -833,7 +833,7 @@ ID_tab.Units='pixels';
         end
     end
     function get_ROI(varargin)
-        if isempty(aligned_green_img_full) && ~isfield(tsne_data,'cropped_img')
+        if isempty(aligned_green_img_full) && ~isfield(tsne_data,'cropped_img') && ~batch
             msg=msgbox('Full movie does not exist. Reload to adjust ROI');
             uiwait(msg);
         else 
@@ -990,6 +990,7 @@ ID_tab.Units='pixels';
                 tsne_data.dist = dist;
                 tsne_data.aligned_green_img = mean_green_img_t(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
                 prepare_foreground;
+                S=1;
                 display_movie;
                 display_foreground;
                 save_export_btn.String = 'Save Background and ROI';
@@ -1126,22 +1127,33 @@ ID_tab.Units='pixels';
          end
     end
     function batch_ROI_foreground(varargin)
-        f_list = uigetfile('*_aligned.mat','MultiSelect','on');  
-        if ischar(f_list)
-            f_list={f_list};
+        f_list_glob = uigetfile('*_aligned.mat','MultiSelect','on');  
+        if ischar(f_list_glob)
+            f_list_glob={f_list_glob};
         end
-        if iscell(f_list)
-            for ii=1:length(f_list)
-                tsne_data=load(f_list{ii},'mean_green_img_t','dist','filenames');                
-                mean_green_img_t = tsne_data.mean_green_img_t;
-                dist=tsne_data.dist;
-                max_bkgd_proj=max(tsne_data.mean_green_img_t,[],3);
-                bkgd_img = mean_green_img_t;
-                get_ROI;
-                1;
-            end
+        if iscell(f_list_glob)
+            ii_glob = 1;
+            ii_glob_max = length(f_list_glob);
+            batch=1;
+            
+            increment_ii_glob;
+
             
         end
+    end
+    function increment_ii_glob(varargin)
+        if ii_glob<=ii_glob_max
+            tsne_data=load(f_list_glob{ii_glob},'mean_green_img_t','dist','filenames');                
+            mean_green_img_t = tsne_data.mean_green_img_t;
+            dist=tsne_data.dist;
+            max_bkgd_proj=max(tsne_data.mean_green_img_t,[],3);
+            bkgd_img = mean_green_img_t;
+            get_ROI;
+        else
+            batch=0;
+            msgbox('Done with backgrounds!');
+        end
+            
     end
     function batch_run_tsne(varargin)
         f_list = uigetfile('*_prepared.mat','MultiSelect','on');  
@@ -1155,7 +1167,7 @@ ID_tab.Units='pixels';
             foreground = tsne_data.foreground;
             
             crop_green_img;
-        
+        1;
         
         
         
@@ -1200,7 +1212,7 @@ ID_tab.Units='pixels';
 
         cmap_full=[cmap1;cmap];
         colormap(ax_foreground,cmap_full)
-        set (gcf, 'WindowScrollWheelFcn', @mouseScroll);
+        set(f_tSNE, 'WindowScrollWheelFcn', @mouseScroll);
         
         sno=size(tsne_data.aligned_green_img,4);
         zsl=size(tsne_data.aligned_green_img,3);
@@ -1658,15 +1670,38 @@ ID_tab.Units='pixels';
 
             end
         else %means we are in batch mode and saving the ROI and forground pixels.
+            more_roi = questdlg('Want to select another ROI?','Yes','No','No');
+            
             tsne_data.foreground = foreground_img;
-           copyfile(strcat(tsne_data.filenames{1},'_aligned.mat'),strcat(tsne_data.filenames{1},'_prepared.mat'));
+            save_export_btn.String = 'Saving...';
+            save_export_btn.BackgroundColor = [0.94,0.94,0.94];
+            switch more_roi
+                case 'yes'
+                if isempty(batch_fname_idx)
+                    batch_fname_idx=0;
+                end
+                batch_fname_idx= batch_fname_idx+1;
+                    
+                filenamez = strcat(tsne_data.filenames{1},'_prepared_',num2str(batch_fname_idx),'.mat');
+                case 'no'
+                    if isempty(batch_fname_idx)                        
+                        filenamez = strcat(tsne_data.filenames{1},'_prepared.mat');
+                    else
+                        batch_fname_idx= batch_fname_idx+1;                    
+                        filenamez = strcat(tsne_data.filenames{1},'_prepared_',num2str(batch_fname_idx),'.mat');
+                        batch_fname_idx=[];
+                    end
+            end
+           copyfile(strcat(tsne_data.filenames{1},'_aligned.mat'),filenamez);
+           
+           bkgd_ROI_saving = 0;
             save(strcat(tsne_data.filenames{1},'_prepared.mat'),'-struct','tsne_data',...
                 'dist','background','background_err','foreground','roi','-append');
             %restore button;
-            save_export_btn.String = 'Save Data';
-                save_export_btn.BackgroundColor = [0.94,0.94,0.94];
-                bkgd_ROI_saving = 0;
-            
+           save_export_btn.String = 'Save to file...'; 
+                
+            ii_glob = ii_glob+1;
+            increment_ii_glob;
         end        
     end
     function soma_responses(varargin)
