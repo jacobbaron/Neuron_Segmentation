@@ -36,8 +36,8 @@ filename=[];old_tsne_alpha=[];
 tsne_title=[];
 tcourse_fig=[];tcourse_ax=[];
 foreground_title=[];
-selected_pts=[];
-batch=0;pca_done=0;
+selected_pts=[];bkgd_ROI_saving = 0;
+batch=0;pca_done=0;max_bkgd_proj=[];bkgd_img=[];mean_green_img_t=[];
 roi=[];background_fit=1;
 nm_sig={};bkgd_done=[];
 movie_loaded=0;IDed=0;tsned=0;clustered=0;
@@ -281,7 +281,12 @@ disp_red_channel=uimenu(disp_menu,'Label','Show Aligned Red Channel','Callback',
     {@view_aligned_red_channel});
 compare_neuron_btn=uimenu(disp_menu,'Label','Compare Neurons','Callback',...
     {@compare_neuron_sigs},'Accelerator','D');
-
+batch_menu = uimenu(gcf,'Label','Batch Import');
+run_batch_alignment = uimenu(batch_menu ,'Label','Run Batch Alignment','Callback',{@batch_alignment});
+batch_ROI_foreground_menu = uimenu(batch_menu ,'Label','Select batch ROIs and Foregrounds',...
+    'Callback',{@batch_ROI_foreground});
+batch_tsne_menu = uimenu(batch_menu, 'Label','Batch run t-SNE and clustering',...
+    'Callback',{@batch_run_tsne});
 % import_data_btn=uicontrol('Parent',tsne_tab,...
 %     'Style','pushbutton',...
 %     'Position',import_data_pos,...
@@ -406,10 +411,14 @@ ID_tab.Units='pixels';
             if ~isempty(fname)
 
                ld=load(fname);
-               if isfield(ld,'t
+               
                try
                    %delete_figs;
-                   tsne_data=ld.tsne_data;
+                   if isfield(ld,'tsne_data')
+                        tsne_data=ld.tsne_data;
+                   else
+                       tsne_data=ld;
+                   end
                    movie_loaded=1;tsned=1;clustered=1;
                    erase_ID_tab;
                catch
@@ -541,11 +550,14 @@ ID_tab.Units='pixels';
                     tsne_data.filenames={img_data.filename,img_data.filename_log};
                     if any(strcmp(varargin,'preloaded'))
                         run_alignment('preloaded',img_data);
-                        get_ROI('preloaded');
+                    %    get_ROI('preloaded');
 
                     else
                         run_alignment('',img_data);
-                        get_ROI;
+                        tsne_data.full_img_size = size(tsne_data.aligned_green_img);
+                        if ~batch
+                            get_ROI;
+                        end
                     end
                     movie_loaded=1;IDed=0;tsned=0;clustered=0;pca_done=0;
                     undo_item.Enable='Off';
@@ -832,16 +844,15 @@ ID_tab.Units='pixels';
                 if isempty(aligned_green_img_full)
                     tsne_data.aligned_green_img=tsne_data.aligned_green_img+tsne_data.background;
                     aligned_green_img_full = recreate_full_img(tsne_data.aligned_green_img,...
-                        tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi);
-                    bkgd_img= aligned_green_img_full;                    
-                else
-                    
-                    bkgd_img = aligned_green_img_full;
+                        tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi);                                       
                 end
+                bkgd_img= mean(aligned_green_img_full,4);
                 if ~isempty(foreground)
                         bkgd_img(~foreground) = NaN;
                 end
-                max_bkgd_proj=max(mean(bkgd_img,4),[],3);
+                max_bkgd_proj=max(bkgd_img,[],3);
+            end
+                
                 img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
                 %img.CDataMapping='direct';
                 %cmapsz=size(colormap,1);
@@ -858,9 +869,9 @@ ID_tab.Units='pixels';
                 while ~bkgd_done
                     rect=keep_in_bounds(round(getrect(ax_foreground)),size(bkgd_img));
                     
-                    bkgd_img(rect(2):rect(2)+rect(4),rect(1):rect(1)+rect(3),:,:)=NaN;
+                    bkgd_img(rect(2):rect(2)+rect(4),rect(1):rect(1)+rect(3),:)=NaN;
                     
-                    max_bkgd_proj=max(mean(bkgd_img,4),[],3);
+                    max_bkgd_proj=max(bkgd_img,[],3);
                     delete(img)
                     
                     img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
@@ -876,7 +887,7 @@ ID_tab.Units='pixels';
                     
                 end
                 img_size=size(bkgd_img);
-                bkgd_img_mean = mean(bkgd_img(:,:,:,:),4);
+                bkgd_img_mean = bkgd_img;
                 [Xmesh,Ymesh,Zmesh]=meshgrid(1:img_size(2),1:img_size(1),1:img_size(3));
                 notnan=~isnan(bkgd_img_mean);
                 Xflat=Xmesh(notnan);
@@ -887,7 +898,7 @@ ID_tab.Units='pixels';
                 A=[ones(size(Xflat)),Xflat,Yflat,Zflat];
                 [b,std_b] = lscov(A,bkgd_img_mean_flat);
                 roi_size=size(bkgd_img);
-                fit=zeros(roi_size(1:3));
+                fit=zeros(roi_size);
 
                 Afit=[ones(size(Xmesh(:))),Xmesh(:),Ymesh(:),Zmesh(:)];
                 fit(:)=Afit*b;
@@ -896,21 +907,23 @@ ID_tab.Units='pixels';
                     + (Zmesh.*std_b(4)).^2);
                 tsne_data.background = fit;
                 tsne_data.background_err = err_fit;
-            end
+            
             
 
         
         
 %         if ~any(strcmp(varargin,'preloaded'))
-            if ~batch
-                
-                max_proj=max(mean(aligned_green_img_full,4),[],3);
+                choice='';
+             while ~strcmp(choice,'Yes')
+                max_proj=max(mean_green_img_t,[],3);
                 delete(img)                
                 img=imshow(max_proj,[min(max_proj(max_proj>0)), max(max_proj(:))],'Parent',ax_foreground);
+                ax_foreground.XLim=[0,size(max_proj,2)];
+                ax_foreground.YLim=[0,size(max_proj,1)];
                 title(ax_foreground,'Select entire ROI')
                 %img.CData=(max_proj-min(max_proj(max_proj>0)))*cmapsz/...
 %                     (max(max_proj(:))-min(max_proj(max_proj>0)));
-                rect=round(getrect(ax_foreground));
+                rect=keep_in_bounds(round(getrect(ax_foreground)),size(max_proj));
                 
                 %keep in boundss
                 rect=rect([2,1,4,3]);
@@ -918,41 +931,80 @@ ID_tab.Units='pixels';
                     if rect(ii)<1
                         rect(ii)=1;
                     end
-                    if rect(ii)+rect(ii+2)>size(aligned_green_img_full,ii)
-                        rngend=size(aligned_green_img_full,ii);
+                    if rect(ii)+rect(ii+2)>size(max_proj,ii)
+                        rngend=size(max_proj,ii);
                     else
                         rngend=rect(ii)+rect(ii+2);
                     end
                     rng(ii,:)=[rect(ii),rngend];
                 end
 
-
+    
                 roi=rng;
-                img=imshow(max(max(...
-                    aligned_green_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),...
-                    :,:),[],3),[],4),...
-                    [Rmin Rmax],'Parent',ax_foreground);                                     
+                delete(img);
+                cropped_img=max_proj(rng(1,1):rng(1,2),rng(2,1):rng(2,2));
+                img=imshow(cropped_img,...
+                    [min(cropped_img(:)) max(cropped_img(:))],'Parent',ax_foreground);   
+                ax_foreground.XLim=[0,size(cropped_img,2)];
+                ax_foreground.YLim=[0,size(cropped_img,1)];
                 tgroup.SelectedTab=tsne_tab;
                 choice=questdlg('Use this ROI?','Confirm','Yes','Cancel','Cancel');
-            else
-                choice='Yes';
-                rng=[1,size(aligned_green_img_full,1);...
-                    1,size(aligned_green_img_full,2)];
-                roi=rng;
-            end
+             end
+%                 choice='Yes';
+%                 rng=[1,size(aligned_green_img_full,1);...
+%                     1,size(aligned_green_img_full,2)];
+%                 roi=rng;
+            
 %         else
 %             choice='Yes';
 %             rng=tsne_data.roi;
 %         end
-        switch choice
-            case 'Yes'             
+                  
              
             %get indicies of full image, then get indicies of cropped
             %image, to keep track of which pixels are cropped regions, save
             %those in a different array. 
-            tsne_data.full_img_size=size(aligned_green_img_full);
             
-            cropped_idx=true(tsne_data.full_img_size);
+            cropped_max_proj = max_proj(rng(1,1):rng(1,2),rng(2,1):rng(2,2));
+            tsne_data.roi=roi;
+            
+            if ~batch
+            
+                crop_green_img;
+                %Img4D=tsne_data.aligned_green_img;
+                %tsne_data.tsne_data.aligned_red_img=tsne_data.aligned_red_img;
+               % tsne_data.aligned_green_img=aligned_green_img;
+                %tsne_data.t=image_times;
+
+                ax_foreground.XLim=[0,size(tsne_data.aligned_green_img,2)];
+                ax_foreground.YLim=[0,size(tsne_data.aligned_green_img,1)];
+            
+                display_movie;
+                waiting=waitbar(.5,'Running PCA...');
+                run_pca;
+                display_foreground;
+                close(waiting);
+            else
+                1;
+                dist = dist(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
+                tsne_data.dist = dist;
+                tsne_data.aligned_green_img = mean_green_img_t(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
+                prepare_foreground;
+                display_movie;
+                display_foreground;
+                save_export_btn.String = 'Save Background and ROI';
+                save_export_btn.BackgroundColor = 'r';
+                bkgd_ROI_saving = 1;
+                msgbox('Select appropriate background threshold for movie');
+                
+            end
+            
+        
+        end
+    end
+    function crop_green_img(varargin)
+        rng=tsne_data.roi;
+        cropped_idx=true(tsne_data.full_img_size);
             cropped_idx(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:) = false;
             tsne_data.cropped_img = aligned_green_img_full(cropped_idx);
             
@@ -963,23 +1015,6 @@ ID_tab.Units='pixels';
             tsne_data.background_err = tsne_data.background_err(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
             tsne_data.aligned_green_img=tsne_data.aligned_green_img-repmat(tsne_data.background,1,1,1,...
                 size(tsne_data.aligned_green_img,4));
-            %Img4D=tsne_data.aligned_green_img;
-            %tsne_data.tsne_data.aligned_red_img=tsne_data.aligned_red_img;
-           % tsne_data.aligned_green_img=aligned_green_img;
-            tsne_data.t=image_times;
-            tsne_data.roi=roi;
-            ax_foreground.XLim=[0,size(tsne_data.aligned_green_img,2)];
-            ax_foreground.YLim=[0,size(tsne_data.aligned_green_img,1)];
-            if ~batch
-                display_movie;
-                waiting=waitbar(.5,'Running PCA...');
-                run_pca;
-                display_foreground;
-                close(waiting);
-            end
-            
-        end
-        end
     end
     function run_pca(varargin)
         
@@ -1013,6 +1048,38 @@ ID_tab.Units='pixels';
         pca_done=1;
         
     end
+    function run_pca_batch(varargin)
+        pca_num=40;
+        
+        Img4D_list=reshape(tsne_data.aligned_green_img,...
+            size(tsne_data.aligned_green_img,1)*...
+            size(tsne_data.aligned_green_img,2)*...
+            size(tsne_data.aligned_green_img,3),...
+            size(tsne_data.aligned_green_img,4));
+        nonzeros=~any(Img4D_list==0,2);
+        Img4D_list_nonzero=Img4D_list(nonzeros,:);
+        coeffs=zeros(size(Img4D_list,1),pca_num);
+        coeffs(nonzeros,:)=pca(double(Img4D_list_nonzero)',...
+            'NumComponents',pca_num);
+            tsne_data.dist=reshape(sqrt(sum(coeffs.^2,2)),...
+                size(tsne_data.aligned_green_img,1),...
+                size(tsne_data.aligned_green_img,2),...
+                size(tsne_data.aligned_green_img,3));
+    end
+    function prepare_foreground(varargin)
+        min_slider=min(dist(:));
+        max_slider=max(dist(:));
+        T=min(dist(:));  
+        foreground_img=dist>T;
+        step=(max_slider-min_slider)/1000;
+        while length(find(foreground_img))>=2000
+            T=T+step;
+            foreground_img=dist>T;
+        end
+        
+        foreground=foreground_img;
+        pca_done=1;
+    end
     function man_run_alignment(varargin)
         run_alignment;
         get_ROI;
@@ -1039,6 +1106,64 @@ ID_tab.Units='pixels';
             end
               
     end
+    function batch_alignment(varargin)
+         f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
+         if iscell(f_list)
+                %f_list_log=dir('log_*.mat');
+                f_list_log=uigetfile('log_*','MultiSelect','on');
+                
+                    for ii=1:length(f_list)
+                        fname=f_list{ii};
+                        fnamelog=f_list_log{ii};
+                        batch=1;
+                        importimg;
+                        display_movie;
+                        run_pca_batch;
+                        tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
+                        save(strcat(fname,'_aligned.mat'),'-struct','tsne_data');
+                        batch=0;
+                    end
+         end
+    end
+    function batch_ROI_foreground(varargin)
+        f_list = uigetfile('*_aligned.mat','MultiSelect','on');  
+        if ischar(f_list)
+            f_list={f_list};
+        end
+        if iscell(f_list)
+            for ii=1:length(f_list)
+                tsne_data=load(f_list{ii},'mean_green_img_t','dist','filenames');                
+                mean_green_img_t = tsne_data.mean_green_img_t;
+                dist=tsne_data.dist;
+                max_bkgd_proj=max(tsne_data.mean_green_img_t,[],3);
+                bkgd_img = mean_green_img_t;
+                get_ROI;
+                1;
+            end
+            
+        end
+    end
+    function batch_run_tsne(varargin)
+        f_list = uigetfile('*_prepared.mat','MultiSelect','on');  
+        if ischar(f_list)
+            f_list={f_list};
+        end
+        for ii=1:length(f_list)
+            tsne_data=load(f_list{ii});
+            aligned_green_img_full = tsne_data.aligned_green_img;
+            aligned_red_img_full = tsne_data.aligned_red_img;
+            crop_green_img;
+        
+        
+        
+        
+        end 
+        
+        
+        
+        
+        
+    end
     function run_everything_default(varargin)
         importimg;
         display_movie;
@@ -1056,6 +1181,8 @@ ID_tab.Units='pixels';
         %neuronID=[];neurons2include=[];nmPeakSigTestMat=[];includeInClassifier=[];
        %ax_NID= gobjects(0);ax3D= gobjects(0);submit_button=[];ORNMenu=[];include_chkbox=[];
         delete(ax_foreground.Children)
+        Rmin = min(tsne_data.aligned_green_img(:));
+        Rmax = max(tsne_data.aligned_green_img(:));
         img=imshow(tsne_data.aligned_green_img(:,:,Z,S), [Rmin Rmax],'Parent',ax_foreground);
         cmap=[0,0,0;1,1,1];
         cmap1=colormap(ax_foreground,gray(100));
@@ -1488,47 +1615,56 @@ ID_tab.Units='pixels';
         mov=animate_3d_stuff2(tsne_data);
     end
     function save_export(varargin)
-        %tsne_data.aligned_red_img=aligned_red_img;
-        %tsne_data.aligned_green_img=aligned_green_img;
-        tsne_data.odor_seq=odor_seq;
-        tsne_data.nmPeakSigMat=nmPeakSig;
-        tsne_data.nmSigMat=nm_sig;
-        if ~isempty(roi)
-            tsne_data.roi=roi;
-        end
-        tsne_data.t=image_times;
-       
-        
-        [tsne_data.neuron_CoM,tsne_data.neuron_var]=calcNeuronPositions(tsne_data);
-        
-        if ~batch
-        [fig_name,pname]=uiputfile('*.fig','Enter figure 1 name',strcat(filename,'_tsne_result.fig'));
-        [fig_name2,pname]=uiputfile('*.fig','Enter figure 2 name',strcat(filename,'_nm_sigs.fig'));
-        else
-            pname=pwd;
-            fig_name=strcat(filename,'_tsne_result.fig');
-            fig_name2=strcat(filename,'_nm_sigs.fig');
-        end
-            
-        if fig_name~=0
-            try
-                savefig(tcourse_fig,fullfile(pname,fig_name));
-                %savefig(peak_sig_fig,fullfile(pname,fig_name2));
-            catch
-                if ~batch
-                    msgbox('Could Not Save Figure Successfully');
-                end
+        if ~bkgd_ROI_saving %different mode for saving background only (when doing batch things)
+            %tsne_data.aligned_red_img=aligned_red_img;
+            %tsne_data.aligned_green_img=aligned_green_img;
+            tsne_data.odor_seq=odor_seq;
+            tsne_data.nmPeakSigMat=nmPeakSig;
+            tsne_data.nmSigMat=nm_sig;
+            if ~isempty(roi)
+                tsne_data.roi=roi;
             end
-            save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
-            saved=1;
+            tsne_data.t=image_times;
+
+
+            [tsne_data.neuron_CoM,tsne_data.neuron_var]=calcNeuronPositions(tsne_data);
+
             if ~batch
-                sv=msgbox('Data Saved!');            
-                uiwait(sv);
+            [fig_name,pname]=uiputfile('*.fig','Enter figure 1 name',strcat(filename,'_tsne_result.fig'));
+            [fig_name2,pname]=uiputfile('*.fig','Enter figure 2 name',strcat(filename,'_nm_sigs.fig'));
+            else
+                pname=pwd;
+                fig_name=strcat(filename,'_tsne_result.fig');
+                fig_name2=strcat(filename,'_nm_sigs.fig');
             end
+
+            if fig_name~=0
+                try
+                    savefig(tcourse_fig,fullfile(pname,fig_name));
+                    %savefig(peak_sig_fig,fullfile(pname,fig_name2));
+                catch
+                    if ~batch
+                        msgbox('Could Not Save Figure Successfully');
+                    end
+                end
+                save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
+                saved=1;
+                if ~batch
+                    sv=msgbox('Data Saved!');            
+                    uiwait(sv);
+                end
+
+            end
+        else %means we are in batch mode and saving the ROI and forground pixels.
+           copyfile(strcat(tsne_data.filenames{1},'_aligned.mat'),strcat(tsne_data.filenames{1},'_prepared.mat'));
+            save(strcat(tsne_data.filenames{1},'_prepared.mat'),'-struct','tsne_data',...
+                'dist','background','background_err','roi','-append');
+            %restore button;
+            save_export_btn.String = 'Save Data';
+                save_export_btn.BackgroundColor = [0.94,0.94,0.94];
+                bkgd_ROI_saving = 0;
             
-        end
-        
-        
+        end        
     end
     function soma_responses(varargin)
         

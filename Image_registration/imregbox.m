@@ -135,6 +135,7 @@ if doublepass==2
 %     [red_stack_cropped_max,xrange,yrange]=crop_img(max(red_stack_cropped_max,[],3));
 %     red_stack_aligned=red_stack_aligned(yrange,xrange,:,:);
 %     green_stack_aligned=green_stack_aligned(yrange,xrange,:,:);
+    close(f);
     end
   %  if size(red_stack_cropped,3)>1
         red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
@@ -145,7 +146,6 @@ if doublepass==2
     red_stack_aligned=red_stack_cropped;
     green_stack_aligned=green_stack_cropped;
     
-    close(f);
     for ii=2:size(red_stack_aligned,4)
         waitbar(0.5+ii/(2*size(red_img,4)),h);
         moving_max=red_stack_cropped_max(:,:,ii);
