@@ -1,10 +1,17 @@
-function [out]=selectTestOdorSet(odor_seq)
+function [out]=selectTestOdorSet(odor_seq,odor_inf)
+%returns out=[odor,conc] indicies of odors not being included in test odor set.
+    if ~exist('odor_inf','var')
+        odor_inf=load('odor_inf.mat');            
+    end
+    odor_list=odor_inf.odor_list;
+    odor_concentration_list=odor_inf.odor_concentration_list;
+    odor_colormap=odor_inf.odor_colormap;
+    
     odors=unique(odor_seq(odor_seq>0),'stable');
-    ld=load('odor_inf.mat');
-    odor_colormap=ld.odor_colormap;
+
     odorconc=cell(length(odors),1);
     for ii=1:length(odors)
-        [odorname ,conc]= compute_odor_conc(odors(ii));
+        [odorname ,conc,inds(ii,:)]= compute_odor_conc(odors(ii),odor_inf);
        odorconc{ii}=sprintf('%s %s',conc,odorname);
     end
     cmap=odor_colormap(odors,:);
@@ -49,8 +56,9 @@ function [out]=selectTestOdorSet(odor_seq)
 
 
 function ok_press(varargin)
-        out=strcmp(odorconc(label_list_box.Value);
+    selected=label_list_box.Value;
     
+    out=inds(~ismember(1:length(odorconc),selected),:);
     uiresume(gcbf);
     
 end

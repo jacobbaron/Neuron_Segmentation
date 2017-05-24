@@ -36,6 +36,11 @@ if any(strcmp(varargin,'doublepass'))
 else
     doublepass=2;
 end
+if any(strcmp(varargin,'crop'))
+    crop=varargin{find(strcmp(varargin,'crop'))+1};
+else
+    crop=1;
+end
 
 %% 
 scaleview=round(scalexy/2);
@@ -81,25 +86,29 @@ for ii=2:size(red_img,4)
     optimizer.MaximumStepLength = MaxStepLength_init;
     
     
-    
-    
     tform_scaled{ii}=tform;
-    %tform_scaled{ii}.T=tform.T*tform_scale.T;
-    tform_scaled{ii}.T(4,1:2)=tform_scaled{ii}.T(4,1:2)*scaleview;
-    tform_scaled{ii}.T(4,3)=tform_scaled{ii}.T(4,3)*scaleviewz;
-%     red_stack_sub_warp(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform_scaled{ii},...
-%         'OutputView',imref3d(img_size,...
-%         [scaleview,size(red_stack_filt,2)],[scaleview,size(red_stack_filt,1)],...
-%         [1,size(red_stack_filt,3)]));
+    if length(size(fixed))==2
     
-    red_stack_aligned(:,:,:,ii)=imwarp(red_img(:,:,:,ii),tform_scaled{ii},...
-        'OutputView',imref3d(img_size));
-    red_sub_aligned(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform,...
-        'OutputView',imref3d(size(red_stack_sub(:,:,:,1))));
-   
-  
-    green_stack_aligned(:,:,:,ii)=imwarp(green_img(:,:,:,ii),tform_scaled{ii},...
-        'OutputView',imref3d(img_size));
+    %tform_scaled{ii}.T=tform.T*tform_scale.T;
+    
+        tform_scaled{ii}.T(3,1:2)=tform_scaled{ii}.T(3,1:2)*scaleview;
+        red_stack_aligned(:,:,:,ii)=imwarp(red_img(:,:,:,ii),tform_scaled{ii},...
+            'OutputView',imref2d(img_size));
+        red_sub_aligned(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform,...
+            'OutputView',imref2d(size(red_stack_sub(:,:,:,1))));
+     green_stack_aligned(:,:,:,ii)=imwarp(green_img(:,:,:,ii),tform_scaled{ii},...
+            'OutputView',imref2d(img_size));
+    else
+        tform_scaled{ii}.T(4,1:2)=tform_scaled{ii}.T(4,1:2)*scaleview;
+        tform_scaled{ii}.T(4,3)=tform_scaled{ii}.T(4,3)*scaleviewz;
+        red_stack_aligned(:,:,:,ii)=imwarp(red_img(:,:,:,ii),tform_scaled{ii},...
+            'OutputView',imref3d(img_size));
+        red_sub_aligned(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform,...
+            'OutputView',imref3d(size(red_stack_sub(:,:,:,1))));
+     
+        green_stack_aligned(:,:,:,ii)=imwarp(green_img(:,:,:,ii),tform_scaled{ii},...
+            'OutputView',imref3d(img_size));
+    end   
     waitbar(ii/(2*size(red_img,4)),h);
 end
 
@@ -114,20 +123,29 @@ fixed_max=red_stack_cropped_max(:,:,1);
 red_stack_aligned=red_stack_cropped;
 green_stack_aligned=green_stack_cropped;
 if doublepass==2
-    f=figure;
-    imagesc(max(red_stack_cropped_max,[],3));
-    title('Select ROI')
-    crop2=getrect;
-    rng_i=round(crop2(2):crop2(2)+crop2(4));
-    rng_j=round(crop2(1):crop2(1)+crop2(3));
-    red_stack_cropped=red_stack_cropped(rng_i,rng_j,:,:);
-    green_stack_cropped=green_stack_cropped(rng_i,rng_j,:,:);
-    red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
-    fixed_max=red_stack_cropped_max(:,:,1);
+    if crop
+     f=figure;
+     imagesc(max(red_stack_cropped_max,[],3));
+     title('Select ROI')
+     crop2=getrect;
+     rng_i=round(crop2(2):crop2(2)+crop2(4));
+     rng_j=round(crop2(1):crop2(1)+crop2(3));
+     red_stack_cropped=red_stack_cropped(rng_i,rng_j,:,:);
+     green_stack_cropped=green_stack_cropped(rng_i,rng_j,:,:);
+%     [red_stack_cropped_max,xrange,yrange]=crop_img(max(red_stack_cropped_max,[],3));
+%     red_stack_aligned=red_stack_aligned(yrange,xrange,:,:);
+%     green_stack_aligned=green_stack_aligned(yrange,xrange,:,:);
+    close(f);
+    end
+  %  if size(red_stack_cropped,3)>1
+        red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
+  %  else
+%        red_stack_cropped_max=red_stack_cropped;
+ %   end
+     fixed_max=red_stack_cropped_max(:,:,1);
     red_stack_aligned=red_stack_cropped;
     green_stack_aligned=green_stack_cropped;
-    red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
-    close(f);
+    
     for ii=2:size(red_stack_aligned,4)
         waitbar(0.5+ii/(2*size(red_img,4)),h);
         moving_max=red_stack_cropped_max(:,:,ii);
@@ -142,17 +160,35 @@ if doublepass==2
            [~,lastwarning]=lastwarn;
         end
         optimizer.MaximumStepLength = MaxStepLength_init;
-        T3D=eye(4);
-        T3D(4,1:2)=tform.T(3,1:2);
-        tform3d=affine3d(T3D);
+        if length(size(moving_max))==2
+            try
+            red_stack_aligned(:,:,:,ii)=imwarp(red_stack_cropped(:,:,:,ii),tform,...
+            'OutputView',imref2d(size(red_stack_cropped_max(:,:,1)))); 
+            catch
+                1;
+            end
+            green_stack_aligned(:,:,:,ii)=imwarp(green_stack_cropped(:,:,:,ii),tform,...
+             'OutputView',imref2d(size(red_stack_cropped_max(:,:,1))));
+        else
+            T3D=eye(4);
+            T3D(4,1:2)=tform.T(3,1:2);
+            tform3d=affine3d(T3D);
 
-        red_stack_aligned(:,:,:,ii)=imwarp(red_stack_cropped(:,:,:,ii),tform3d,...
-            'OutputView',imref3d(size(red_stack_cropped(:,:,:,1)))); 
-        green_stack_aligned(:,:,:,ii)=imwarp(green_stack_cropped(:,:,:,ii),tform3d,...
-            'OutputView',imref3d(size(red_stack_cropped(:,:,:,1)))); 
+            red_stack_aligned(:,:,:,ii)=imwarp(red_stack_cropped(:,:,:,ii),tform3d,...
+                'OutputView',imref3d(size(red_stack_cropped(:,:,:,1)))); 
+            green_stack_aligned(:,:,:,ii)=imwarp(green_stack_cropped(:,:,:,ii),tform3d,...
+                'OutputView',imref3d(size(red_stack_cropped(:,:,:,1)))); 
+        end
     end
 end
-green_stack_aligned=gpu_medfilt4( green_stack_aligned,'green',2);
-red_stack_aligned=gpu_medfilt4(red_stack_aligned,'red',2);
+min_red_stack_aligned=min(red_stack_aligned,[],4);
+idx=find(min_red_stack_aligned~=0);
+[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
+red_stack_aligned = red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
+green_stack_aligned=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
+
+green_stack_aligned=gpu_medfilt4( green_stack_aligned,'green',2,0);
+red_stack_aligned=gpu_medfilt4(red_stack_aligned,'red',2,0);
+
 toc
 close(h)

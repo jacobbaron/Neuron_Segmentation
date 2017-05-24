@@ -7,7 +7,7 @@ function [out]=choose_cluster(label_list,cmap)
         end
         clist_hex=cellstr(rgb2hex(cmap));
         label_list=reshape(label_list,length(label_list),1);
-        label_cell=cellstr(num2str(label_list));
+        label_cell=cellstr(num2str(label_list-1));
         label_cell{1}='Noise';
         label_list_w_color=cellfun(@(x,y)...
             sprintf('<HTML><BODY bgcolor="%s">&emsp;&emsp;&emsp;%s&emsp;&emsp;&emsp;</BODY></HTML>',x,y),...

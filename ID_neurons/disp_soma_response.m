@@ -1,4 +1,4 @@
-function []=disp_soma_response(odor_seq)
+function []=disp_soma_response(odor_conc_inf)
 
 load AveSomaResponses.mat
 
@@ -11,28 +11,66 @@ dataSEM=dataSEM(idx_odor,idx_ORN,:);
 odorList=odorList(idx_odor);
 infoORNList=infoORNList(idx_ORN);
 
-unique_odors=unique(odor_seq(odor_seq>0));
-for ii=1:length(unique_odors)
-    [odor{ii},conc{ii}]=compute_odor_conc(unique_odors(ii));
-    inds(ii,1)=find(strcmp(odorList,odor{ii}));
-    
-    inds(ii,2)=find(log10(str2num(conc{ii}))==log10(concList));
-    
-    response_mat(ii,:)=dataMean(inds(ii,1),:,inds(ii,2));
+not_water=cellfun(@(x)~strcmp(x,'water'),odor_conc_inf(:,2));
+odor_conc=odor_conc_inf(not_water,1:2);
+%make odor_conc converable to double
+%odor_conc=cellfun(@(x)strrep(x,'10^','e'),odor_conc(:,1),'UniformOutput',false);
+
+conc_num=cellfun(@(x)str2num(x),odor_conc(:,1),'UniformOutput',false);
+if any(cellfun(@isempty,conc_num))
+    conc_num{cellfun(@isempty,conc_num)}=NaN;
+end
+conc_num_log=(round(log10([conc_num{:}])));
+concListLog=log10(concList);
+
+[conc_tf,conc_id] = ismember(conc_num_log',concListLog);
+[odor_tf, odor_id] = ismember(odor_conc(:,2),odorList);
+odor_conc_tf = conc_tf & odor_tf;
+
+odor_conc_list=odor_conc(odor_conc_tf,:);
+odor_conc_id=[conc_id(odor_conc_tf),odor_id(odor_conc_tf)];
+%odor_conc_str=cellfun(@(x,y)sprintf('%s %s',x,y),odor_conc_list(:,1),odor_conc_list(:,2),...
+%    'UniformOutput',false);
+
+unique_odor_conc_id=fliplr(unique(fliplr(odor_conc_id),'rows'));
+response_mat=zeros(size(unique_odor_conc_id,1),size(dataMean,2));
+for ii=1:length(unique_odor_conc_id)
+    response_mat(ii,:)=dataMean(unique_odor_conc_id(ii,2),:,unique_odor_conc_id(ii,1));
 
 end
-[odor_ordered,~,odor_order]=intersect(odorList,odor','stable');
-figure;
-imagesc(response_mat(odor_order,:))
+%[odor_ordered,~,odor_order]=intersect(odorList,odor','stable');
+%response_mat_ordered=[];
+% %conc_order=[];
+% for ii=1:length(odor_ordered)
+%     new_conc=find(strcmp(odor,odor_ordered{ii}));
+%     conc_order=[conc_order,new_conc];
+%     response_mat_ordered=[response_mat_ordered;response_mat(new_conc,:)];  
+% end
+f=figure;
+imagesc(response_mat)
 ax=gca;
 ax.XTick=1:size(response_mat,2);
 ax.YTick=1:size(response_mat,1);
 ax.XTickLabel=infoORNList;
 ax.XTickLabelRotation=-45;
 ax.XAxisLocation='Top';
-ax.YTickLabel=cellfun(@(x,y)sprintf('%s %s',x,y),conc(odor_order)',odor_ordered,...
-    'UniformOutput',false);
-colormap(jet)
-colorbar
 
+conc_str=cellfun(@(x)num2str(x,'%0.0e'),num2cell(concList),'UniformOutput',false);
+
+
+ax.YTickLabel=cellfun(@(x,y)sprintf('%s %s',x,y),...
+    conc_str(unique_odor_conc_id(:,1)),odorList(unique_odor_conc_id(:,2)),...
+    'UniformOutput',false);
+colormap(jet) 
+colorbar
+ax.Units='pixels';
+ratio=size(response_mat,2)/size(response_mat,1);
+ax_width=ax.Position(3);
+fig_width=f.Position(3);
+margins=fig_width-ax_width;
+f.Position(3)=ax_width*ratio+margins;
+ax.Position(3)=ax_width*ratio;
+ax.Units='normalized';
+axis equal; 
+grid on;
 

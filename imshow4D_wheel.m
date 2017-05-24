@@ -1,4 +1,4 @@
-function  imshow3D( Img, disprange )
+function  imshow4D_wheel( Img, disprange )
 %IMSHOW3D displays 3D grayscale images in slice by slice fashion with mouse
 %based slice browsing and window and level adjustment control.
 %

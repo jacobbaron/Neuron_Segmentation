@@ -40,7 +40,7 @@ if isempty(tsne_data)
     waitbar(.05,tsne_bar,'Running k-means to reduce computation size!');
     fprintf('Running k-means to reduce computation size!\n');
     num_groups=round(size(img_list_foreground,1)/2);
-    [groups,group_center]=kmeans(img_list_foreground,num_groups);
+    [groups,group_center]=kmeans(double(img_list_foreground),num_groups);
     img_list_preclustered=img_list_foreground;  
     for ii=1:num_groups
        img_list_preclustered(groups==ii,:)=repmat(group_center(ii,:),length(find(groups==ii)),1); 

@@ -1,6 +1,6 @@
 %figure(1);plot(tsne_result_peaks(:,1),tsne_result_peaks(:,2),'.');drawnow;
 function cluster=choose_clusters(tsne_result_peaks,sigs,odors,neuronsListDay,neuron_names,...
-    tCourseNeuron)
+    tCourseNeuron,odor_conc_inf,odor_inf)
 figure(1);
 unique_neurons=unique(neuron_names);
 markers={'o','+','*','x','s','d'};
@@ -55,6 +55,6 @@ for ii=1:length(cluster)
     
     plot(t,sig,'-')
     title(runnums{cluster(ii)})
-    patches=add_patches_to_plot(t,odor_seq,gca,ii==1);
+    patches=add_patches_to_plot(odor_conc_inf,gca,ii==1,odor_inf);
     ylim([min(sig)-0.1*max(sig),max(sig)+0.1*max(sig)])
 end

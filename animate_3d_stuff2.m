@@ -1,4 +1,15 @@
-function [F]=animate_3d_stuff2(label,Idx,col,green_img,red_img,signals,fname,t,odor_seq)
+function [F]=animate_3d_stuff2(tsne_data)
+
+label=tsne_data.labels;
+Idx=2:max(tsne_data.labels(:));
+col=tsne_data.cmap(2:end,:);
+green_img=tsne_data.aligned_green_img;
+red_img=tsne_data.aligned_red_img;
+signals=tsne_data.cluster_signals;
+fname=tsne_data.filenames{1};
+t=tsne_data.t;
+odor_conc_inf=tsne_data.odor_conc_inf;
+
 [~,name,~] = fileparts(fname) ;
         name=strrep(name,'_',' ');
 maxsig=max(cellfun(@max,signals));
@@ -59,7 +70,7 @@ axis off
     im2.CDataMapping='direct';
     subplot(4,1,4)
     ax_plot=gca;
-    patches=add_patches_to_plot(t,odor_seq,ax_plot,1);
+    patches=add_patches_to_plot(odor_conc_inf,ax_plot,1,tsne_data.odor_inf);
     xlabel('Time (s)')
     hold(ax_plot,'on');
     ax_plot.YAxis.Visible='off';
