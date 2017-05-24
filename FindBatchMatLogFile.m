@@ -17,7 +17,7 @@ function pairedLogFileList = FindBatchMatLogFile(movieFileList, logMatFileList)
     % display for debuging
     debugFLag = 0;
     if debugFLag
-        disp('Found log files for selected movies:')
+        disp('Found log files for selected movies:');
         for i = 1:length(movieFileList)
             disp([movieFileList{i}, '---', pairedLogFileList{i}]);
         end 
