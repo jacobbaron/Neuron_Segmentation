@@ -26,7 +26,16 @@ if any(strcmp('tsne_iter',varargin))
 else
     tsne_iter=8000;
 end
-
+if any(strcmp('use_space',varargin))
+    use_space=varargin{find(strcmp('use_space',varargin))+1};
+else
+    use_space=0;
+end
+if use_space
+   scale_factor = varargin{find(strcmp('scale_factor',varargin))+1};
+else
+    scale_factor=1
+end
 %% reshape image stacks
 tsne_bar=waitbar(0,'Starting t-SNE...');
 foreground_stack=repmat(foreground,1,1,1,size(img_stack,4));
@@ -35,6 +44,16 @@ img_stack_foreground(~foreground_stack)=0;
 foreground_list=find(foreground);
 img_list=reshape(img_stack,size(img_stack,1)*size(img_stack,2)*size(img_stack,3),size(img_stack,4));
 img_list_foreground=img_list(foreground_list,:);
+if use_space
+    max_img = max(img_stack_foreground(:));
+    min_img = min(img_stack_foreground(:));
+    idx=find(foreground);
+    [i,j,k] = ind2sub(size(foreground),idx);
+    i = i*max_img*scale_factor/max(i);
+    j = j*max_img*scale_factor/max(j);
+    k = k*max_img*scale_factor/max(k);
+    img_list_foreground = [img_list_foreground,i,j,k];
+end
 %% preliminary kmeans to reduce number of points to run tsne on
 if isempty(tsne_data)
     waitbar(.05,tsne_bar,'Running k-means to reduce computation size!');

@@ -118,6 +118,8 @@ k_means_txt_pos = [num_iter_txt_pos(1),num_iter_txt_pos(2)+num_iter_txt_pos(4),.
     num_iter_txt_pos(3:4)];
 k_means_box_pos = [num_iter_box_pos(1),k_means_txt_pos(2),...
     num_iter_txt_pos(3),num_iter_box_pos(4)];
+
+
 % if BtnStPnt < 300
 %     BtnStPnt = 300;
 % end
@@ -172,7 +174,7 @@ k_means_red_box = uicontrol('Parent',tsne_tab,'Style', 'edit',...
     'FontSize', LVFntSz,...
     'Callback', {@val_changed,kmeans_frac});
     tsne_ax.Units='pixels';
-k_txt_pos=[tsne_ax.Position(1), k_means_txt_pos(2:4)];
+k_txt_pos=[tsne_ax.Position(1)+200, k_means_txt_pos(2:4)];
 k_box_pos=[k_txt_pos(1)+k_txt_pos(3),...
     k_means_box_pos(2:4)];
 alpha_txt_pos=[k_box_pos(1)+k_box_pos(3)+10,k_txt_pos(2),...
@@ -180,6 +182,25 @@ alpha_txt_pos=[k_box_pos(1)+k_box_pos(3)+10,k_txt_pos(2),...
 alpha_box_pos=[alpha_txt_pos(1)+alpha_txt_pos(3),...
     k_box_pos(2:4)];
 
+use_spatial_chkbox_pos = [k_txt_pos(1)-90,k_txt_pos(2),30,30];
+use_spatial_chkbox_txt_pos = [use_spatial_chkbox_pos(1)-k_means_txt_pos(3)*1.3-10,k_means_txt_pos(2),k_means_txt_pos(3)*1.3,...
+    k_means_txt_pos(4)];
+use_spatial_chkbox_txt = uicontrol('Parent',tsne_tab,'Style', ...
+    'text','Position', use_spatial_chkbox_txt_pos,...
+    'String',sprintf('Use Spatial Positions for t-SNE'), ...
+    'BackgroundColor',...
+    [0.8 0.8 0.8], ...
+    'FontSize', LFntSz);
+use_spatial_chkbox = uicontrol('Parent',tsne_tab,'Style', 'checkbox',...
+    'Position', use_spatial_chkbox_pos);
+
+scale_factor_box = uicontrol('Parent',tsne_tab,'Style', 'edit',...
+    'Position', [use_spatial_chkbox_pos(1)+30,use_spatial_chkbox_txt_pos(2),...
+    k_box_pos(3)/2,k_box_pos(4)],...
+    'String','1', ...
+    'BackgroundColor', [1 1 1],...
+    'FontSize', LVFntSz,...
+    'Callback', {@val_changed,k});
 
 
 %box for k parameter
@@ -578,7 +599,7 @@ ID_tab.Units='pixels';
         foreground_img=tsne_data.dist>T;
         lb.CData=foreground_img(:,:,Z)+length(cmap1);
         
-        [~,name,~] = fileparts(filename) ;
+        [~,name,~] = fileparts(tsne_data.filenames{1}) ;
         name=strrep(name,'_',' ');
         foreground_title.String=sprintf('%s\nForeground has %d points',...
             name,length(find(foreground_img)));
@@ -1169,10 +1190,12 @@ ID_tab.Units='pixels';
         for ii=1:length(f_list)
             file2load = fullfile('prepared',f_list{ii});
             tsne_data=load(file2load);
-            prep_spot = strfind(file2load,'prepared_');
+            [~,fnm] = fileparts(file2load);
+            prep_spot = strfind(fnm,'prepared_');
             if ~isempty(prep_spot)
-                idx = file2load(prep_spot + length('prepared_'):end);
+                idx = fnm(prep_spot + length('prepared_'):end);
                 [pth,nme] = fileparts(tsne_data.filenames{1});
+                tsne_data.filenames{1} = fullfile(pth,[nme,'_',idx]);
                 
                 
                 
@@ -1192,7 +1215,8 @@ ID_tab.Units='pixels';
             save_export;
         
         
-            fprintf('Completed t-SNE for %s',tsne_data.filenames{1});
+            fprintf('Completed t-SNE for %s\n',tsne_data.filenames{1});
+            batch=0;
         
         end 
         msgbox('Done with t-SNE and clustering!')
@@ -1296,10 +1320,15 @@ ID_tab.Units='pixels';
 
 %% t-sne + clustering functions
     function run_tsne(varargin)
-        foreground=foreground_img;
+        %foreground=foreground_img;
         max_iter=str2num(num_iter_box.String);
+        
+        
+        
        tsne_data_no_cluster=CIA_TSNE(tsne_data.aligned_green_img,foreground,...
            tsne_data.odor_seq,'tsne_iter',max_iter);
+       
+       
        tsne_data=catstruct(tsne_data,tsne_data_no_cluster);
         plot(tsne_ax,tsne_data.tsne_result(:,1),...
             tsne_data.tsne_result(:,2),'.')
