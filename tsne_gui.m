@@ -1709,8 +1709,13 @@ ID_tab.Units='pixels';
             aligned_file = fullfile(filedir,'aligned',[name,'.mat']); 
              [filedir,name]= fileparts(filenamez);
             prepared_file = fullfile(filedir,'prepared',[name,'.mat']);
-            
-           copyfile(aligned_file,prepared_file);
+           switch more_roi
+               case 'Yes'
+                   copyfile(aligned_file,prepared_file);
+               case 'No'
+                   movefile(aligned_file,prepared_file);
+           end
+           
            
            bkgd_ROI_saving = 0;
             save(prepared_file,'-struct','tsne_data',...
