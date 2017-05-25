@@ -28,6 +28,11 @@ clustering_bar=waitbar(0,'Running clustering...');
 group_clusters=lsbdc_elki(tsne_preclustered,k,alpha)+1;
 clusters=group_clusters(groups);
 
+
+if ~any(clusters>1)
+   clusters(clusters==1)=2; 
+end
+
 num_clusters=length(unique(clusters));
 unique_clusters=unique(clusters);
 waitbar(70,clustering_bar,sprintf('Found %d clusters!',num_clusters))
@@ -42,5 +47,6 @@ tsne_data.clustering_output=group_clusters;
 tsne_data.cmap=cmap;
 tsne_data.labels=labels;
 close(clustering_bar);
+
 tsne_data=calculate_cluster_signals(tsne_data,img_stack,odor_sequence);
 

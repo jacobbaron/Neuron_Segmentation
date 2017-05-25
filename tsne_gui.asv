@@ -1169,12 +1169,10 @@ ID_tab.Units='pixels';
         for ii=1:length(f_list)
             file2load = fullfile('prepared',f_list{ii});
             tsne_data=load(file2load);
-            [~,fnm] = fileparts(file2load);
-            prep_spot = strfind(fnm,'prepared_');
+            prep_spot = strfind(file2load,'prepared_');
             if ~isempty(prep_spot)
-                idx = fnm(prep_spot + length('prepared_'):end);
+                idx = file2load(prep_spot + length('prepared_'):end);
                 [pth,nme] = fileparts(tsne_data.filenames{1});
-                tsne_data.filenames{1} = fullfile(pth,[nme,'_',idx]);
                 
                 
                 
