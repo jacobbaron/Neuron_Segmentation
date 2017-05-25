@@ -578,7 +578,7 @@ ID_tab.Units='pixels';
         foreground_img=tsne_data.dist>T;
         lb.CData=foreground_img(:,:,Z)+length(cmap1);
         
-        [~,name,~] = fileparts(filename) ;
+        [~,name,~] = fileparts(tsne_data.filenames{1}) ;
         name=strrep(name,'_',' ');
         foreground_title.String=sprintf('%s\nForeground has %d points',...
             name,length(find(foreground_img)));
