@@ -1194,7 +1194,8 @@ ID_tab.Units='pixels';
             save_export;
         
         
-            fprintf('Completed t-SNE for %s',tsne_data.filenames{1});
+            fprintf('Completed t-SNE for %s\n',tsne_data.filenames{1});
+            batch=0;
         
         end 
         msgbox('Done with t-SNE and clustering!')
