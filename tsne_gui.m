@@ -1151,7 +1151,7 @@ ID_tab.Units='pixels';
                             save(aligned_file,'-struct','tsne_data');
                             batch=0;
                         catch
-                            fprintf('Movie %s failed to load for some reason, check!',fname);
+                            fprintf('Movie %s failed to load for some reason, check!\n',fname);
                         end
                     end
          end
