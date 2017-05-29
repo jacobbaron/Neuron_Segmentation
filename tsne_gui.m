@@ -1131,7 +1131,9 @@ ID_tab.Units='pixels';
          
          %get all the log mat files in current folder
          logMatFileList = ListMatLogFiles( pwd );
-         
+         if ischar(f_list)
+            f_list={f_list};
+        end
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
