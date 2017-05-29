@@ -868,6 +868,7 @@ ID_tab.Units='pixels';
                         bkgd_img(~foreground) = NaN;
                 end
                 max_bkgd_proj=max(bkgd_img,[],3);
+                mean_green_img_t = max(mean(aligned_green_img_full,4),[],3);
             end
                 
                 img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
