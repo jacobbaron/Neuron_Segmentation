@@ -1522,7 +1522,8 @@ ID_tab.Units='pixels';
             [ax_xyz,maxinten_t_hand,maxinten_t_text]=...
                 imshow4D_maxinten(tsne_data.aligned_green_img, compare_tab );
             maxinten_t_hand.Callback={@compareSlider};
-            ax_xyz.Children.CData=Img_max_xyz(:,:,1);
+            
+            %ax_xyz.Children.CData=Img_max_xyz(:,:,1);
             ax_compare=gobjects(0);
             for ii=1:length(tsne_data.cluster_signals)
                 ax_compare(ii)=axes('Parent',compare_tab,'Visible','off'); 
@@ -1553,7 +1554,8 @@ ID_tab.Units='pixels';
                     'Callback',@reset_compare);
                 reset_compare_btn.Position(1:2)=[ax_compare(1).Position(1)-60,...
                     ax_compare(1).Position(2)+ax_compare(1).Position(4)+20];
-            end            
+            end  
+            change_include;
     end
 
     function reset_compare(varargin)
