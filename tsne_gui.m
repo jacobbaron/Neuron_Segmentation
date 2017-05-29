@@ -1137,18 +1137,22 @@ ID_tab.Units='pixels';
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
                 f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
                     for ii=1:length(f_list)
-                        fname=f_list{ii};
-                        fnamelog=f_list_log{ii};
-                        batch=1;
-                        tsne_data=struct;
-                        importimg;
-                        display_movie;
-                        run_pca_batch;
-                        tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
-                        mkdir('aligned');
-                        aligned_file = fullfile('aligned',strcat(fname,'_aligned.mat'))
-                        save(aligned_file,'-struct','tsne_data');
-                        batch=0;
+                        try
+                            fname=f_list{ii};
+                            fnamelog=f_list_log{ii};
+                            batch=1;
+                            tsne_data=struct;
+                            importimg;
+                            display_movie;
+                            run_pca_batch;
+                            tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
+                            mkdir('aligned');
+                            aligned_file = fullfile('aligned',strcat(fname,'_aligned.mat'))
+                            save(aligned_file,'-struct','tsne_data');
+                            batch=0;
+                        catch
+                            fprintf('Movie %s failed to load for some reason, check!',fname);
+                        end
                     end
          end
     end
