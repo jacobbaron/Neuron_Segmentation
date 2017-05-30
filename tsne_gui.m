@@ -1372,6 +1372,7 @@ ID_tab.Units='pixels';
                 uiwait;
             end
             clustered=1;
+            update_cluster_signals;
             
         else
             warndlg(sprintf('Run t-SNE or import data before running clustering'));
