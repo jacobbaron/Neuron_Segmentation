@@ -608,10 +608,9 @@ ID_tab.Units='pixels';
     function compareSlider(hObj,event)
          t=round(hObj.Value);
          S=t;
-         if ~isempty(event)
-             shand.Value = S;
-             SliceSlider(shand,[]);
-         end
+         if isempty(
+         shand.Value = S;
+         SliceSlider(shand,[]);
          for ii=1:length(ax_compare)
              if isvalid(tline_compare(ii))
                 delete(tline_compare(ii));
