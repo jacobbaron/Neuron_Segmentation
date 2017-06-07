@@ -1378,10 +1378,12 @@ ID_tab.Units='pixels';
             update_cluster_signals;
             plot_tsne_clusters;            
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);
+            figure(f_tSNE);
+            compare_neuron_sigs;
             if ~batch                   
                 msg=msgbox('Segmentation Success!');
                 uiwait;
-                compare_neuron_sigs;
+                
             end
             
             
