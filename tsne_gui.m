@@ -454,6 +454,14 @@ ID_tab.Units='pixels';
 %                 img_data.filename_log=tsne_data.filenames{2};
             filename=tsne_data.filenames{1};
              end
+             if isa(tsne_data.aligned_green_img,'uint16')
+                tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
+                    tsne_data.scale_factor_green;
+                 tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
+                    tsne_data.scale_factor_red;
+                tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
+                    tsne_data.scale_factor_cropped;
+             end
              
             %filename=img_data.filename;
             setup_figures;
@@ -1722,11 +1730,11 @@ ID_tab.Units='pixels';
             filename = tsne_data.filenames{1};
             if ~batch
             [fig_name,pname]=uiputfile('*.fig','Enter figure 1 name',strcat(filename,'_tsne_result.fig'));
-            [fig_name2,pname]=uiputfile('*.fig','Enter figure 2 name',strcat(filename,'_nm_sigs.fig'));
+            %[fig_name2,pname]=uiputfile('*.fig','Enter figure 2 name',strcat(filename,'_nm_sigs.fig'));
             else
                 pname=pwd;
                 fig_name=strcat(filename,'_tsne_result.fig');
-                fig_name2=strcat(filename,'_nm_sigs.fig');
+               % fig_name2=strcat(filename,'_nm_sigs.fig');
             end
 
             if fig_name~=0
@@ -1738,8 +1746,28 @@ ID_tab.Units='pixels';
                         msgbox('Could Not Save Figure Successfully');
                     end
                 end
+                max_red = max(tsne_data.aligned_red_img(:));
+                min_red = min(tsne_data.aligned_red_img(:));
+                scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/(max_red-min_red),'uint16');
+                tsne_data.scale_factor_red = (2^16-1)/(max_red-min_red);
+                tsne_data.aligned_red_img = scaled_red;
+                max_green = max(tsne_data.aligned_green_img(:));
+                min_green = min(tsne_data.aligned_green_img(:));
+                scaled_green = cast((tsne_data.aligned_green_img-min_green)*(2^16-1)/(max_green-min_green),'uint16');
+                tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
+                tsne_data.aligned_green_img = scaled_green;
+                min_cropped = min(tsne_data.cropped_img);
+                max_cropped = max(tsne_data.cropped_img);
+                tsne_data.scale_factor_cropped = (2^16-1)/(max_cropped-min_cropped);
+                tsne_data.cropped_img = cast((tsne_data.cropped_img-min_cropped)*tsne_data.scale_factor_cropped,'uint16');
                 save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
                 saved=1;
+                tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
+                    tsne_data.scale_factor_green;
+                 tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
+                    tsne_data.scale_factor_red;
+                tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
+                    tsne_data.scale_factor_cropped;
                 if ~batch
                     sv=msgbox('Data Saved!');            
                     uiwait(sv);
