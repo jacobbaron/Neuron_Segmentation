@@ -1031,16 +1031,17 @@ ID_tab.Units='pixels';
     function crop_green_img(varargin)
         rng=tsne_data.roi;
         cropped_idx=true(tsne_data.full_img_size);
-            cropped_idx(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:) = false;
-            tsne_data.cropped_img = aligned_green_img_full(cropped_idx);
+        cropped_idx(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:) = false;
+
+        tsne_data.aligned_green_img=aligned_green_img_full-repmat(tsne_data.background,1,1,1,...
+            size(tsne_data.aligned_green_img,4));
+        
+        tsne_data.cropped_img = tsne_data.aligned_green_img(cropped_idx);
+        tsne_data.aligned_green_img=tsne_data.aligned_green_img(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+        tsne_data.aligned_red_img=aligned_red_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+        tsne_data.background = tsne_data.background(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+        tsne_data.background_err = tsne_data.background_err(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
             
-            
-            tsne_data.aligned_green_img=aligned_green_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
-            tsne_data.aligned_red_img=aligned_red_img_full(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
-            tsne_data.background = tsne_data.background(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
-            tsne_data.background_err = tsne_data.background_err(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
-            tsne_data.aligned_green_img=tsne_data.aligned_green_img-repmat(tsne_data.background,1,1,1,...
-                size(tsne_data.aligned_green_img,4));
     end
     function run_pca(varargin)
         
@@ -1373,15 +1374,17 @@ ID_tab.Units='pixels';
 %                 end
             
             tsne_alpha=ones(length(unique(tsne_data.labels(tsne_data.labels>1))),1);
+            clustered=1;
+            update_cluster_signals;
             plot_tsne_clusters;
+            compare_neuron_sigs;
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);
             if ~batch                   
                 msg=msgbox('Segmentation Success!');
                 uiwait;
             end
-            clustered=1;
-            update_cluster_signals;
-            compare_neuron_sigs;
+            
+            
         else
             warndlg(sprintf('Run t-SNE or import data before running clustering'));
         end        
@@ -1685,7 +1688,9 @@ ID_tab.Units='pixels';
     end
     function plot_signals(varargin)
             update_cluster_signals;
-
+            try
+               close(tcourse_fig); 
+            end
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);         
             
              [~,name]=fileparts(filename);
