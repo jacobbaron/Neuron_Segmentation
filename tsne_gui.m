@@ -1376,12 +1376,12 @@ ID_tab.Units='pixels';
             tsne_alpha=ones(length(unique(tsne_data.labels(tsne_data.labels>1))),1);
             clustered=1;
             update_cluster_signals;
-            plot_tsne_clusters;
-            compare_neuron_sigs;
+            plot_tsne_clusters;            
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);
             if ~batch                   
                 msg=msgbox('Segmentation Success!');
                 uiwait;
+                compare_neuron_sigs;
             end
             
             
