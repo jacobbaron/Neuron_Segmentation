@@ -29,7 +29,6 @@ fclose(fileID);
 
 [status,cmdout]=system(elki_script_path);
 disp(cmdout);
-pause(10);
 rehash toolbox;
 output_dir=dir(strcat(out_path,filesep,'cluster_*'));
 group_labels=zeros(size(data,1),1);
@@ -47,21 +46,19 @@ rehash toolbox;
 % 
 delete(in_path);
 % 
-
-ME =MException('Blank:blank','');
-while ~isempty(ME.identifier)
-    try
-
-        rmdir(out_path,'s');
-        ME=MException('','');
-    catch ME
-        if strcmp(ME.identifier,'MATLAB:RMDIR:SomeDirectoriesNotRemoved')
-           pause(5);
-        end
-
-    end
-
+ME =MException('','');
+while ME
+try
+    
+    rmdir(out_path,'s');
+    ME=MException('','');
+catch ME
+    if strcmp(ME.identifier,'MATLAB:RMDIR:SomeDirectoriesNotRemoved')
+       wait( 
+       
 end
+
+
 
 
 end
