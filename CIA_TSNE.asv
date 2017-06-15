@@ -38,8 +38,7 @@ else
 end
 %% reshape image stacks
 
-if any(foreground(:)>1)
-    foreground(foreground==1)=0;
+if any(forground(:)>1)
     foreground(foreground>1)=1;
 end
     

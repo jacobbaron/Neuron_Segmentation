@@ -1791,15 +1791,13 @@ ID_tab.Units='pixels';
                 tsne_data.aligned_red_img = scaled_red;
                 max_green = max([tsne_data.aligned_green_img(:);tsne_data.cropped_img(:)]);
                 min_green = min([tsne_data.aligned_green_img(:);tsne_data.cropped_img(:)]);
+                scaled_green = cast((tsne_data.aligned_green_img-min_green)*(2^16-1)/(max_green-min_green),'uint16');
                 tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
-                scaled_green = cast((tsne_data.aligned_green_img-min_green)*...
-                    tsne_data.scale_factor_green,'uint16');
-                
                 tsne_data.aligned_green_img = scaled_green;
-                %min_cropped = min(tsne_data.cropped_img);
-                %max_cropped = max(tsne_data.cropped_img);
+                min_cropped = min(tsne_data.cropped_img);
+                max_cropped = max(tsne_data.cropped_img);
                 %tsne_data.scale_factor_cropped = (2^16-1)/(max_cropped-min_cropped);
-                tsne_data.cropped_img = cast((tsne_data.cropped_img-min_green)*...
+                tsne_data.cropped_img = cast((tsne_data.cropped_img-min_cropped)*...
                     tsne_data.scale_factor_green,'uint16');
                 save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
                 saved=1;
@@ -1808,7 +1806,7 @@ ID_tab.Units='pixels';
                  tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
                     tsne_data.scale_factor_red;
                 tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
-                    tsne_data.scale_factor_green;
+                    tsne_data.scale_factor_cropped;
                 if ~batch
                     sv=msgbox('Data Saved!');            
                     uiwait(sv);
@@ -1871,7 +1869,8 @@ ID_tab.Units='pixels';
         disp_soma_response(tsne_data.odor_conc_inf)
     end
     function plot_avg_full_green(varargin)
-        figure;imshow3D(mean(recreate_full_img(tsne_data.aligned_green_img,...
+        figure;imshow3D(mean(recreate_full_img(tsne_data.aligned_green_img+...
+            repmat(tsne_data.background,1,1,1,size(tsne_data.aligned_green_img,4)),...
             tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi),4));
         
     end
