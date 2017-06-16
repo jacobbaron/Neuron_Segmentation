@@ -498,10 +498,11 @@ ID_tab.Units='pixels';
             aligned_green_img_full=[];
             aligned_red_img_full=[];
             %run_pca;
-            pca_done=0;
+
             foreground=tsne_data.labels>0;
             foreground_img=tsne_data.labels+1;
             if isfield(tsne_data,'dist')
+                pca_done = 1;
                 min_slider=min(tsne_data.dist(:));
                 max_slider=max(tsne_data.dist(:));
                 inten_sld.Min = min_slider;
@@ -1115,6 +1116,8 @@ ID_tab.Units='pixels';
     function prepare_foreground(varargin)
         min_slider=min(tsne_data.dist(:));
         max_slider=max(tsne_data.dist(:));
+        inten_sld.Min=min_slider;
+        inten_sld.Max=max_slider;
         T=min(tsne_data.dist(:));  
         foreground_img=tsne_data.dist>T;
         step=(max_slider-min_slider)/1000;
@@ -1122,7 +1125,7 @@ ID_tab.Units='pixels';
             T=T+step;
             foreground_img=tsne_data.dist>T;
         end
-        
+        inten_sld.Value=T;
         foreground=foreground_img;
         pca_done=1;
     end
@@ -1218,7 +1221,7 @@ ID_tab.Units='pixels';
     function increment_ii_glob(varargin)
         if ii_glob<=ii_glob_max
             fnamez = fullfile('.\aligned\',f_list_glob{ii_glob});
-            tsne_data=load(fnamez,'mean_green_img_t','dist','filenames');                
+            tsne_data=load(fnamez,'mean_green_img_t','dist','filenames','which_side');                
             mean_green_img_t = tsne_data.mean_green_img_t;
             dist=tsne_data.dist;
             max_bkgd_proj=max(tsne_data.mean_green_img_t,[],3);
@@ -1369,20 +1372,30 @@ ID_tab.Units='pixels';
         hold(ax_foreground,'off');
         
         
-        if pca_done
+        if pca_done && ~batch
             inten_sld.Min=min_slider;
             inten_sld.Max=max_slider;
+            T = min_slider;
+            fgimg = tsne_data.dist>T;
+            step=(max_slider-min_slider)/1000;
+            while length(find(fgimg))>=length(find(tsne_data.foreground))
+                T=T+step;
+                fgimg=tsne_data.dist>T;
+            end
+            
             inten_sld.Value=T;
         end
         inten_sld.Callback=@filt_inten;
         inten_txt.String='Background Threshold';
     end
-
+   
     
 
 %% t-sne + clustering functions
     function run_tsne(varargin)
-        tsne_data.foreground=foreground_img;
+        if ~any(foreground_img(:)>1)
+            tsne_data.foreground=foreground_img;
+        end
         max_iter=str2num(num_iter_box.String);
         
         

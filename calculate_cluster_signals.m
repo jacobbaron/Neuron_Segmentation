@@ -1,6 +1,13 @@
 function [tsne_data]=calculate_cluster_signals(tsne_data,img_stack,odor_sequence)
-    
-    unique_clusters=unique(tsne_data.labels(tsne_data.foreground));
+    foreground = tsne_data.foreground;
+    if any(foreground(:)>1)
+        foreground(foreground==1)=0;
+        foreground(foreground>1)=1;
+        
+    end
+
+
+    unique_clusters=unique(tsne_data.labels(logical(foreground)));
     unique_clusters=unique_clusters(unique_clusters>1);
     cluster_signals=cell(length(unique_clusters),1);
     img_size=size(img_stack);
