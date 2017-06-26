@@ -462,7 +462,7 @@ ID_tab.Units='pixels';
                  tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
                     tsne_data.scale_factor_red;
                 tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
-                    tsne_data.scale_factor_cropped;
+                    tsne_data.scale_factor_green;
              end
              
             %filename=img_data.filename;
