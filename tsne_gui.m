@@ -1304,8 +1304,8 @@ ID_tab.Units='pixels';
                 else
                     use_spatial_chkbox.Value = 0;
                 end
-            else
-                use_spatial_chkbox.Value = 0;
+            %else
+                %use_spatial_chkbox.Value = 0;
             end
                    
             
@@ -1901,7 +1901,8 @@ ID_tab.Units='pixels';
            
            bkgd_ROI_saving = 0;
             save(prepared_file,'-struct','tsne_data',...
-                'dist','background','background_err','foreground','roi','-append');
+                'dist','background','background_err','foreground','roi',...
+                'use_space','-append');
             %restore button;
            save_export_btn.String = 'Save to file...'; 
            if strcmp(more_roi,'Yes')     
