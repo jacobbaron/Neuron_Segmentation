@@ -1028,18 +1028,10 @@ ID_tab.Units='pixels';
                 close(waiting);
             else
                 1;
-                if all(size(dist)==size(tsne_data.mean_green_img_t))
+                if all(size(tsne_data.dist)==size(tsne_data.mean_green_img_t))
                     tsne_data.dist = dist(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
                 else
-                    h = waitbar(.25,'PCA not correct, re-running -- loading file...');
-                    ld = load(fullfile('.\aligned\',f_list_glob{ii_glob}),'aligned_green_img');
-                    waitbar(.5,h,'PCA not correct, re-running -- running PCA');
                     
-                    tsne_data.aligned_green_img = ld.aligned_green_img;
-                    run_pca_batch;
-                    close(h);
-                    dist = tsne_data.dist;
-                    tsne_data.dist = tsne_data.dist(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
                 end
                 tsne_data.aligned_green_img = mean_green_img_t(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
                 prepare_foreground;
