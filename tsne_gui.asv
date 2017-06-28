@@ -278,7 +278,7 @@ undo_item=uimenu(edit_menu,'Label','Undo...','Enable','off',...
 select_ROI_item=uimenu(edit_menu,'Label','Select ROI','Callback',{@get_ROI});
 tsne_parameters=uimenu(edit_menu,'Label','Edit t-SNE paremeters','Callback',{@tsne_parems});
 cluster_parameters=uimenu(edit_menu,'Label','Edit clustering paremeters','Callback',{@cluster_parems});
-draw_movie_cluster_mn = uimenu(edit_menu,'Label','Draw Cluster on Movie','Callback',{@draw_movie_cluster});
+
 disp_soma=uimenu(edit_menu,'Label','Plot Soma Responses','Callback',{@soma_responses});
 run_menu=uimenu(gcf,'Label','Run');
 run_alignment_menu=uimenu(run_menu,'Label','Run Alignment',...
@@ -288,10 +288,11 @@ run_tsne_menu=uimenu(run_menu,'Label','Run t-SNE',...
 run_clustering_menu=uimenu(run_menu,'Label','Run Clustering',...
     'Callback',{@run_clustering});
 run_everything_menu=uimenu(run_menu,'Label','Run t-SNE and Clustering',...
-    'Callback',{@run_everything},'Accelerator','R');
+    'Callback',{@run_everything});
 man_cluster_menu=uimenu(run_menu,'Label','Reassign cluster manually',...
     'Callback',{@manual_cluster},'Accelerator','E');
-
+draw_movie_cluster_mn = uimenu(run_menu,'Label','Draw Cluster on Movie','Callback',{@draw_movie_cluster},...
+    'Accelerator','R');
 disp_menu=uimenu(gcf,'Label','Plot');
 plot_sig_button=uimenu(disp_menu,'Label','Plot Signals','Callback',...
     {@plot_signals});
@@ -1509,7 +1510,10 @@ ID_tab.Units='pixels';
         title(tsne_ax,'Select points to assign to cluster')
         eval=1;
         try
-            rect=getrect_JB(tsne_ax);
+            %rect=getrect_JB(tsne_ax);
+            cl = imfreehand(tsne_ax,'Closed',true);
+            msk = cl.getPosition;
+            
         catch
             eval=0;
         end
@@ -1529,10 +1533,11 @@ ID_tab.Units='pixels';
                 if strcmp(asgn,'Noise')
                     asgn=1;
                 end
-                selected_pts_x=(tsne_result_full(:,1)>rect(1)) & ...
-                    (tsne_result_full(:,1)<rect(1)+rect(3));
-                selected_pts_y=(tsne_result_full(:,2)>rect(2)) & ...
-                    (tsne_result_full(:,2)<rect(2)+rect(4));
+%                 selected_pts_x=(tsne_result_full(:,1)>rect(1)) & ...
+%                     (tsne_result_full(:,1)<rect(1)+rect(3));
+%                 selected_pts_y=(tsne_result_full(:,2)>rect(2)) & ...
+%                     (tsne_result_full(:,2)<rect(2)+rect(4));
+                selected_pts = inpolygon(tsne_result_full(:,1),tsne_result_full(:,2),msk(:,2),msk(:,1))
                 foreground_labels=double(tsne_data.labels(tsne_data.foreground));
                 foreground_labels(selected_pts_x & selected_pts_y)=asgn;
                 tsne_data.labels(tsne_data.foreground)=foreground_labels;
@@ -1580,12 +1585,51 @@ ID_tab.Units='pixels';
         num_old_no_noise_clusters=length(unique(tsne_data.labels(tsne_data.labels>1)));
         num_clusters=length(unique_clusters);
         
-        cl = 	(ax_foreground);
-        setClosed(cl,true);
-        msk = createMask(cl,lb);
-        
-        
-        tsne_data.labels(tsne_data.labels>0 & msk)
+        cl = imfreehand(ax_foreground,'Closed',true);
+        %uiwait(cl);
+        if ~isempty(cl)
+            msk = zeros(size(tsne_data.labels));
+            msk(:,:,Z) = createMask(cl,lb);
+
+            if num_clusters>1
+                    asgn=choose_cluster(unique_clusters,tsne_data.cmap);
+            else
+                    asgn=max(unique_clusters)+1;
+            end
+            if ~isempty(asgn)
+                old_tsne_data=tsne_data;
+                old_tsne_alpha=tsne_alpha;
+                if strcmp(asgn,'New cluster')
+                    asgn=max(unique_clusters)+1;
+                end
+                if strcmp(asgn,'Noise')
+                    asgn=1;
+                end
+
+                tsne_data.labels(tsne_data.labels>0 & msk) = asgn;
+                unique_no_noise_clusters=unique(tsne_data.labels(tsne_data.labels>1));
+                num_new_no_noise_clusters=length(unique_no_noise_clusters);
+                if num_old_no_noise_clusters~=num_new_no_noise_clusters;
+                    tsne_alpha=ones(num_new_no_noise_clusters,1);
+                end
+                for ii=1:length(unique_no_noise_clusters)
+                    tsne_data.labels(tsne_data.labels==unique_no_noise_clusters(ii))=...
+                        ii+1;
+                end
+                unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
+                tsne_data.neuronID=cellfun(@num2str,...
+                        num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
+                tsne_data.cmap=generate_cmap(length(unique_clusters(unique_clusters>1)));
+                foreground_img=tsne_data.labels+1;
+                plot_tsne_clusters;
+                clustered=1;
+                undo_item.Enable='On';
+                saved=0;
+                compare_neuron_sigs;
+            end
+            delete(cl)
+        end
+            
     end
 %% plotting and saving
     function plot_tsne_clusters(varargin)

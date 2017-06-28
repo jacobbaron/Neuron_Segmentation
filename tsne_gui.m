@@ -278,8 +278,7 @@ undo_item=uimenu(edit_menu,'Label','Undo...','Enable','off',...
 select_ROI_item=uimenu(edit_menu,'Label','Select ROI','Callback',{@get_ROI});
 tsne_parameters=uimenu(edit_menu,'Label','Edit t-SNE paremeters','Callback',{@tsne_parems});
 cluster_parameters=uimenu(edit_menu,'Label','Edit clustering paremeters','Callback',{@cluster_parems});
-draw_movie_cluster_mn = uimenu(run_menu,'Label','Draw Cluster on Movie','Callback',{@draw_movie_cluster},...
-    'Accelerator','R');
+
 disp_soma=uimenu(edit_menu,'Label','Plot Soma Responses','Callback',{@soma_responses});
 run_menu=uimenu(gcf,'Label','Run');
 run_alignment_menu=uimenu(run_menu,'Label','Run Alignment',...
@@ -292,7 +291,8 @@ run_everything_menu=uimenu(run_menu,'Label','Run t-SNE and Clustering',...
     'Callback',{@run_everything});
 man_cluster_menu=uimenu(run_menu,'Label','Reassign cluster manually',...
     'Callback',{@manual_cluster},'Accelerator','E');
-
+draw_movie_cluster_mn = uimenu(run_menu,'Label','Draw Cluster on Movie','Callback',{@draw_movie_cluster},...
+    'Accelerator','R');
 disp_menu=uimenu(gcf,'Label','Plot');
 plot_sig_button=uimenu(disp_menu,'Label','Plot Signals','Callback',...
     {@plot_signals});
@@ -1510,11 +1510,14 @@ ID_tab.Units='pixels';
         title(tsne_ax,'Select points to assign to cluster')
         eval=1;
         try
-            rect=getrect_JB(tsne_ax);
+            %rect=getrect_JB(tsne_ax);
+            cl = imfreehand(tsne_ax,'Closed',true);
+            msk = cl.getPosition;
+            
         catch
             eval=0;
         end
-        if eval
+        if eval && ~isempty(cl)
             title(tsne_ax,'t-SNE Result')
             if num_clusters>1
                 asgn=choose_cluster(unique_clusters,tsne_data.cmap);
@@ -1530,12 +1533,14 @@ ID_tab.Units='pixels';
                 if strcmp(asgn,'Noise')
                     asgn=1;
                 end
-                selected_pts_x=(tsne_result_full(:,1)>rect(1)) & ...
-                    (tsne_result_full(:,1)<rect(1)+rect(3));
-                selected_pts_y=(tsne_result_full(:,2)>rect(2)) & ...
-                    (tsne_result_full(:,2)<rect(2)+rect(4));
+%                 selected_pts_x=(tsne_result_full(:,1)>rect(1)) & ...
+%                     (tsne_result_full(:,1)<rect(1)+rect(3));
+%                 selected_pts_y=(tsne_result_full(:,2)>rect(2)) & ...
+%                     (tsne_result_full(:,2)<rect(2)+rect(4));
+                selected_pts = inpolygon(tsne_result_full(:,1),tsne_result_full(:,2),msk(:,1),msk(:,2));
                 foreground_labels=double(tsne_data.labels(tsne_data.foreground));
-                foreground_labels(selected_pts_x & selected_pts_y)=asgn;
+                %foreground_labels(selected_pts_x & selected_pts_y)=asgn;
+                foreground_labels(selected_pts)=asgn;
                 tsne_data.labels(tsne_data.foreground)=foreground_labels;
                 
                 unique_no_noise_clusters=unique(tsne_data.labels(tsne_data.labels>1));
@@ -1557,6 +1562,7 @@ ID_tab.Units='pixels';
                 undo_item.Enable='On';
                 saved=0;
                 compare_neuron_sigs;
+                delete(cl);
             end
         end            
             
