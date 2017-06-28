@@ -1580,51 +1580,12 @@ ID_tab.Units='pixels';
         num_old_no_noise_clusters=length(unique(tsne_data.labels(tsne_data.labels>1)));
         num_clusters=length(unique_clusters);
         
-        cl = imfreehand(ax_foreground,'Closed',true);
-        uiwait(cl);
-        if ~isempty(cl)
-            msk = zeros(size(tsne_data.labels));
-            msk(:,:,Z) = createMask(cl,lb);
-
-            if num_clusters>1
-                    asgn=choose_cluster(unique_clusters,tsne_data.cmap);
-            else
-                    asgn=max(unique_clusters)+1;
-            end
-            if ~isempty(asgn)
-                old_tsne_data=tsne_data;
-                old_tsne_alpha=tsne_alpha;
-                if strcmp(asgn,'New cluster')
-                    asgn=max(unique_clusters)+1;
-                end
-                if strcmp(asgn,'Noise')
-                    asgn=1;
-                end
-
-                tsne_data.labels(tsne_data.labels>0 & msk) = asgn;
-                unique_no_noise_clusters=unique(tsne_data.labels(tsne_data.labels>1));
-                num_new_no_noise_clusters=length(unique_no_noise_clusters);
-                if num_old_no_noise_clusters~=num_new_no_noise_clusters;
-                    tsne_alpha=ones(num_new_no_noise_clusters,1);
-                end
-                for ii=1:length(unique_no_noise_clusters)
-                    tsne_data.labels(tsne_data.labels==unique_no_noise_clusters(ii))=...
-                        ii+1;
-                end
-                unique_clusters=unique(tsne_data.labels(tsne_data.labels>0));
-                tsne_data.neuronID=cellfun(@num2str,...
-                        num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
-                tsne_data.cmap=generate_cmap(length(unique_clusters(unique_clusters>1)));
-                foreground_img=tsne_data.labels+1;
-                plot_tsne_clusters;
-                clustered=1;
-                undo_item.Enable='On';
-                saved=0;
-                compare_neuron_sigs;
-            end
-            delete(cl)
-        end
-            
+        cl = 	(ax_foreground);
+        setClosed(cl,true);
+        msk = createMask(cl,lb);
+        
+        
+        tsne_data.labels(tsne_data.labels>0 & msk)
     end
 %% plotting and saving
     function plot_tsne_clusters(varargin)
