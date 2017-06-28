@@ -1581,7 +1581,7 @@ ID_tab.Units='pixels';
         num_clusters=length(unique_clusters);
         
         cl = imfreehand(ax_foreground,'Closed',true);
-        uiwait(cl);
+        %uiwait(cl);
         if ~isempty(cl)
             msk = zeros(size(tsne_data.labels));
             msk(:,:,Z) = createMask(cl,lb);
