@@ -13,7 +13,7 @@ inten_sld=[];
 inten_txt=[];
 S=[];
 Z=[];
-Rmin=[];
+Rmin=[];can_time_slide = 1;
 Rmax=[];
 cmap1=[];
 cmap_full=[];
@@ -45,6 +45,7 @@ ax_NID= gobjects(0);ax3D= gobjects(0);submit_button=[];ORNMenu=[];include_chkbox
 ax_xyz= gobjects(0);ax_xz= gobjects(0);ax_yz= gobjects(0);tsne_alpha=[];
 confirmed=[];maxinten_t_hand=gobjects(0);ax_compare=gobjects(0);white_bkd=gobjects(0);
 compare_chkbox=gobjects(0);tline_compare=gobjects(0);maxinten_t_text=gobjects(0);
+green_mov=[];
 fLeg=gobjects(0);compareable=0;reset_compare_btn=gobjects(0);
 Img_yz=[];Img_xz=[];Img_xy=[];Img_yz_full=[];Img_xz_full=[];Img_xy_full=[];
 
@@ -627,7 +628,7 @@ ID_tab.Units='pixels';
     function compareSlider(hObj,event)
          t=round(hObj.Value);
          S=t;
-         if ~isempty(event)
+         if ~isempty(event) && can_time_slide
              shand.Value = S;
              SliceSlider(shand,[]);
          end
@@ -653,7 +654,7 @@ ID_tab.Units='pixels';
     end
     function SliceSlider (hObj,event)
         S = round(get(hObj,'Value'));
-        img.CData=(tsne_data.aligned_green_img(:,:,Z,S)-imin)*scale_factor+1;
+        img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;
         %caxis([Rmin Rmax])
         if sno > 1
             set(stxthand, 'String', sprintf('t step %d / %d',S, sno));
@@ -691,7 +692,7 @@ ID_tab.Units='pixels';
                      else
                          set(ztxthand, 'String', '2D image');
                      end
-                    img.CData=(tsne_data.aligned_green_img(:,:,Z,S)-imin)*scale_factor+1;
+                    img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;
                     lb.CData=foreground_img(:,:,Z)+length(cmap1);
                     if Z==1
                        larva_side_label.String=tsne_data.which_side{1};
@@ -1344,20 +1345,21 @@ ID_tab.Units='pixels';
         %neuronID=[];neurons2include=[];nmPeakSigTestMat=[];includeInClassifier=[];
        %ax_NID= gobjects(0);ax3D= gobjects(0);submit_button=[];ORNMenu=[];include_chkbox=[];
         delete(ax_foreground.Children)
+        green_mov = tsne_data.aligned_green_img;
         Rmin = min(tsne_data.aligned_green_img(:));
         Rmax = max(tsne_data.aligned_green_img(:));
         img=imshow(tsne_data.aligned_green_img(:,:,Z,S), [Rmin Rmax],'Parent',ax_foreground);
         cmap=[0,0,0;1,1,1];
         cmap1=colormap(ax_foreground,gray(100));
-        imin=double(min(tsne_data.aligned_green_img(tsne_data.aligned_green_img(:,:,:,1)>0)));
-        imax=double(max(tsne_data.aligned_green_img(:)));
+        imin=double(min(green_mov(green_mov(:,:,:,1)>0)));
+        imax=double(max(green_mov(:)));
         scale_factor=(size(cmap1,1)-1)/(imax-imin);
         %C1=(tsne_data.aligned_green_img-imin)
         hold(ax_foreground,'on');
 
         img.CDataMapping='direct';
         %img.CData=tsne_data.aligned_green_img(:,:,Z,S)*scale_factor;
-        img.CData=(tsne_data.aligned_green_img(:,:,Z,S)-imin)*scale_factor+1;
+        img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;
 
         cmap_full=[cmap1;cmap];
         colormap(ax_foreground,cmap_full)
@@ -1981,9 +1983,32 @@ ID_tab.Units='pixels';
         disp_soma_response(tsne_data.odor_conc_inf)
     end
     function plot_avg_full_green(varargin)
-        figure;imshow3D(mean(recreate_full_img(tsne_data.aligned_green_img,...
-            tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi),4));
-        
+       
+         if can_time_slide
+%              figure;imshow3D(mean(recreate_full_img(tsne_data.aligned_green_img,...
+%           tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi),4));
+            can_time_slide = 0;
+            green_mov = mean(tsne_data.aligned_green_img,4);
+            
+            S = 1;
+            imin=double(min(green_mov(green_mov(:,:,:,1)>0)));
+            imax=double(max(green_mov(:)));
+            scale_factor=(size(cmap1,1)-1)/(imax-imin);
+            img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;
+            shand.Visible = 'off';
+         else
+             green_mov = tsne_data.aligned_green_img;
+             imin=double(min(green_mov(green_mov(:,:,:,1)>0)));
+            imax=double(max(green_mov(:)));
+            scale_factor=(size(cmap1,1)-1)/(imax-imin);
+             
+             shand.Visible = 'on';
+             S = round(shand.Value);
+             img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;
+             can_time_slide = 1;
+         end
+         
+         
     end
 %% classifier functions
     function idNeurons(varargin)
