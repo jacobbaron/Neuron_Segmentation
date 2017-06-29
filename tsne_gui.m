@@ -305,6 +305,8 @@ compare_neuron_btn=uimenu(disp_menu,'Label','Compare Neurons','Callback',...
     {@compare_neuron_sigs},'Accelerator','D');
 avg_full_green_menu = uimenu(disp_menu,'Label','Plot full average green signal','Callback',...
     {@plot_avg_full_green});
+avg_full_green_menu = uimenu(disp_menu,'Label','Plot full average green signal (pop out)','Callback',...
+    {@plot_avg_full_green_pop_out});
 batch_menu = uimenu(gcf,'Label','Batch Import');
 run_batch_alignment = uimenu(batch_menu ,'Label','Run Batch Alignment','Callback',{@batch_alignment});
 batch_ROI_foreground_menu = uimenu(batch_menu ,'Label','Select batch ROIs and Foregrounds',...
@@ -1635,6 +1637,8 @@ ID_tab.Units='pixels';
         end
             
     end
+
+
 %% plotting and saving
     function plot_tsne_clusters(varargin)
         if tsned
@@ -2010,6 +2014,15 @@ ID_tab.Units='pixels';
          
          
     end
+    function plot_avg_full_green_pop_out(varargin)
+       
+         
+              figure;imshow3D(mean(recreate_full_img(tsne_data.aligned_green_img,...
+           tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi),4));
+         
+         
+    end
+
 %% classifier functions
     function idNeurons(varargin)
         nmPeakSigTestMat=[];
