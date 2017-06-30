@@ -94,28 +94,9 @@ end
         subplot(2,ratio,1)
     end
     plot_3d_stuff(labels,labels2plot,red_img,cmap(labels2plot,:));
-    axis equal
     ax3D=gca;
-    ax3D.Position=[.01,.5,.3,.5];
+    ax3D.Position=[.015,-0.27,.3,1.6];
     
-    fullImg4D = recreate_full_img(tsne_data.aligned_green_img,...
-        tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi);
-    firstOdorIdx = find(tsne_data.odor_seq,1);
-    nmMaxProj = make_max_proj_img(fullImg4D(:,:,:,1:firstOdorIdx),tsne_data.pixelSize);
-    maxProj = max(nmMaxProj(:));
-    minProj = min(nmMaxProj(nmMaxProj>0));
-    nmMaxProjScaled = (nmMaxProj-minProj)/(maxProj-minProj);
-    imgProj = cat(3,zeros(size(nmMaxProj)),nmMaxProjScaled,zeros(size(nmMaxProj)));
-    subplot(2,ratio,ratio+1)
-    imshow(imgProj)
-    axis equal
-    axProj = gca;
-    
-    axProj.Position = [0.01,.0,0.3,0.5];
-    t=title('f_0');
-    t.Units = 'normalized';
-    t.Color = [1,1,1];   
-    t.Position(2) = .85;
     if exist('axID','var')
         ax=axID;
     end

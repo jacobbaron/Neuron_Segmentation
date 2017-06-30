@@ -1,4 +1,4 @@
-function  tsne_gui()
+    function  tsne_gui()
 %
 
 %% Initialize a bunch of globals
@@ -1884,16 +1884,19 @@ ID_tab.Units='pixels';
             filename = tsne_data.filenames{1};
             if ~batch
             [fig_name,pname]=uiputfile('*.fig','Enter figure 1 name',strcat(filename,'_tsne_result.fig'));
+            png_name=strcat(filename,'_tsne_result.png');
             %[fig_name2,pname]=uiputfile('*.fig','Enter figure 2 name',strcat(filename,'_nm_sigs.fig'));
             else
                 pname=pwd;
                 fig_name=strcat(filename,'_tsne_result.fig');
+                png_name=strcat(filename,'_tsne_result.png');
                % fig_name2=strcat(filename,'_nm_sigs.fig');
             end
 
             if fig_name~=0
                 try
                     savefig(tcourse_fig,fullfile(pname,fig_name));
+                    print(tcourse_fig,png_name,'-dpng','-r200');
                     %savefig(peak_sig_fig,fullfile(pname,fig_name2));
                 catch
                     if ~batch
