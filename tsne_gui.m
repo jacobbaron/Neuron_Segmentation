@@ -1566,8 +1566,9 @@ ID_tab.Units='pixels';
                 undo_item.Enable='On';
                 saved=0;
                 compare_neuron_sigs;
-                delete(cl);
+                
             end
+            delete(cl);
         end            
             
         end
@@ -1633,7 +1634,7 @@ ID_tab.Units='pixels';
                 saved=0;
                 compare_neuron_sigs;
             end
-            delete(cl)
+            delete(cl);
         end
             
     end
