@@ -93,16 +93,7 @@ end
     else
         subplot(2,ratio,1)
     end
-    if isfield(tsne_data,'cropped_red_img')
-        label_bkd = zeros(prod(tsne_data.full_img_size(1:3))-prod(size(labels)),1);
-        full_labels = recreate_full_img(labels,label_bkd,tsne_data.full_img_size(1:3),tsne_data.roi);
-        full_red_img = recreate_full_img(tsne_data.aligned_red_img,...
-            tsne_data.cropped_red_img,tsne_data.full_img_size,tsne_data.roi);
-    else
-        full_labels = labels;
-        full_red_img = red_img;
-    end
-    plot_3d_stuff(full_labels,labels2plot,full_red_img,cmap(labels2plot,:));
+    plot_3d_stuff(labels,labels2plot,red_img,cmap(labels2plot,:));
     axis equal
     ax3D=gca;
     ax3D.Position=[.01,.5,.3,.5];
@@ -118,13 +109,13 @@ end
         if isfield(tsne_data,'cropped_red_img')
             fullRedImg4D = recreate_full_img(tsne_data.aligned_red_img,...
                 tsne_data.cropped_red_img,tsne_data.full_img_size,tsne_data.roi);
-            nmMaxProjRed = make_max_proj_img(fullRedImg4D(:,:,:,:),tsne_data.pixelSize);
-            maxProj = max(nmMaxProjRed(:));
-            minProj = min(nmMaxProjRed(nmMaxProjRed>0));
+            nmMaxProjRed = make_max_proj_img(fullRedImg4D(:,:,:,1:firstOdorIdx),tsne_data.pixelSize);
+            maxProj = max(nmMaxProj(:));
+            minProj = min(nmMaxProj(nmMaxProj>0));
             nmMaxProjRedScaled = (nmMaxProjRed-minProj)/(maxProj-minProj);
-            imgProj = cat(3,nmMaxProjRedScaled,nmMaxProjScaled,zeros(size(nmMaxProj)));
         else
             imgProj = cat(3,zeros(size(nmMaxProj)),nmMaxProjScaled,zeros(size(nmMaxProj)));
+
         end      
         
         

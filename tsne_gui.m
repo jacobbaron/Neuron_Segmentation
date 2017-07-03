@@ -468,6 +468,8 @@ ID_tab.Units='pixels';
                     tsne_data.scale_factor_red;
                 tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
                     tsne_data.scale_factor_green;
+                tsne_data.cropped_img = cast(tsne_data.cropped_red_img,'double')/...
+                    tsne_data.scale_factor_red;
              end
              
             %filename=img_data.filename;
@@ -915,23 +917,28 @@ ID_tab.Units='pixels';
                 bkgd_done=0;
 
                 while ~bkgd_done
-                    rect=keep_in_bounds(round(getrect(ax_foreground)),size(bkgd_img));
-                    
-                    bkgd_img(rect(2):rect(2)+rect(4),rect(1):rect(1)+rect(3),:)=NaN;
-                    
-                    max_bkgd_proj=max(bkgd_img,[],3);
-                    delete(img)
-                    
-                    img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
-                    ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
-                    ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
-                    
-                    done=questdlg('Are there more regions to exclude from background?',...
-                        'Define Background','Add more','Done','Add more');
-                    switch done
-                        case 'Done'
-                            bkgd_done=1;                                
-                    end                
+                    %rect=keep_in_bounds(round(getrect(ax_foreground)),size(bkgd_img));
+                    cl = imfreehand(ax_foreground,'Closed',true);
+                    if ~isempty(cl)
+                        
+                        msk3D = repmat(createMask(cl,img),1,1,size(bkgd_img,3));
+
+                        bkgd_img(msk3D)=NaN;
+
+                        max_bkgd_proj=max(bkgd_img,[],3);
+                        delete(img)
+
+                        img=imshow(max_bkgd_proj, [min(max_bkgd_proj(max_bkgd_proj>0)) max(max_bkgd_proj(:))],'Parent',ax_foreground);
+                        ax_foreground.XLim=[0,size(max_bkgd_proj,2)];
+                        ax_foreground.YLim=[0,size(max_bkgd_proj,1)];
+
+                        done=questdlg('Are there more regions to exclude from background?',...
+                            'Define Background','Add more','Done','Add more');
+                        switch done
+                            case 'Done'
+                                bkgd_done=1;                                
+                        end
+                    end
                     
                 end
                 img_size=size(bkgd_img);
@@ -1079,6 +1086,7 @@ ID_tab.Units='pixels';
         
         tsne_data.cropped_img = tsne_data.aligned_green_img(cropped_idx);
         tsne_data.aligned_green_img=tsne_data.aligned_green_img(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
+        tsne_data.cropped_red_img = tsne_data.aligned_red_img(cropped_idx);
         tsne_data.aligned_red_img=tsne_data.aligned_red_img(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:);
         tsne_data.background = tsne_data.background(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
         tsne_data.background_err = tsne_data.background_err(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:);
@@ -1903,8 +1911,8 @@ ID_tab.Units='pixels';
                         msgbox('Could Not Save Figure Successfully');
                     end
                 end
-                max_red = max(tsne_data.aligned_red_img(:));
-                min_red = min(tsne_data.aligned_red_img(:));
+                max_red = max([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
+                min_red = min([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/(max_red-min_red),'uint16');
                 tsne_data.scale_factor_red = (2^16-1)/(max_red-min_red);
                 tsne_data.aligned_red_img = scaled_red;
@@ -1928,6 +1936,8 @@ ID_tab.Units='pixels';
                     tsne_data.scale_factor_red;
                 tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
                     tsne_data.scale_factor_green;
+                tsne_data.cropped_red_img = cast(tsne_data.cropped_red_img,'double')/...
+                    tsne_data.scale_factor_red;
                 if ~batch
                     sv=msgbox('Data Saved!');            
                     uiwait(sv);
