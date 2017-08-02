@@ -529,7 +529,7 @@ ID_tab.Units='pixels';
         end
     end %load existing tsne data file for viewing and editing
     %import nd2 movie file
-    function img_data = importimg(varargin)
+    function importimg(varargin)
         if nargin>0
             batch=0;
         end
@@ -596,7 +596,6 @@ ID_tab.Units='pixels';
 
                     else
                         run_alignment('',img_data);
-                        img_data = rmfield(img_data,'img_stacks');
                         tsne_data.full_img_size = size(tsne_data.aligned_green_img);
                         if ~batch
                             get_ROI;
@@ -876,11 +875,10 @@ ID_tab.Units='pixels';
                 tsne_data_no_cluster=[];
                 plot(tsne_ax,1,1,'Visible','Off')
                 setup_figures;
-                img_data = rmfield(img_data,'img_stacks');
                 if ~batch
                     msg=msgbox('Movie Imported Successfully!');
                     uiwait(msg);
-                    
+                    delete('img_data');
                 else
                     disp('Movie Imported Successfully!');
                 end
@@ -1274,7 +1272,7 @@ ID_tab.Units='pixels';
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
                 f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
                     for ii=1:length(f_list)
-%                         try
+                        try
                             fname=f_list{ii};
                             fnamelog=f_list_log{ii};
                             batch=1;
@@ -1283,15 +1281,13 @@ ID_tab.Units='pixels';
                             ROI_files = dir([fname,'_ROIs.mat']);
                             if ~isempty(ROI_files)
                                 
-                                load(ROI_files(1).name);
-                                ROIs = ROI;
-                                ROI=[];
+                                load(ROI_files);
                             else
                                 ROIs = [];
                             end
                             for jj=1:length(ROIs)+1
                                 if jj==1
-                                    img_data = importimg;
+                                    importimg;
                                 else
                                     ROI = ROIs{jj-1};
                                     img_dataROI = img_data;
@@ -1299,10 +1295,9 @@ ID_tab.Units='pixels';
                                         tsne_data.aligned_green_img(...
                                         ROI(2):ROI(2)+ROI(4),...
                                         ROI(1):ROI(1)+ROI(3),:,:);
-                                    img_dataROI.img_stacks{2} = ...
-                                        tsne_data.aligned_green_img(...
+                                    tsne_data.aligned_green_img(...
                                         ROI(2):ROI(2)+ROI(4),...
-                                        ROI(1):ROI(1)+ROI(3),:,:);
+                                        ROI(1):,ROI(1)+ROI(3),:,:);
                                 end
                                 display_movie;
                                 run_pca_batch;
@@ -1332,9 +1327,9 @@ ID_tab.Units='pixels';
                                 save(aligned_file,'-struct','tsne_data');
                                 batch = 0;
                             end
-%                         catch
-%                             fprintf('Movie %s failed to load for some reason, check!\n',fname);
-%                             end
+                        catch
+                            fprintf('Movie %s failed to load for some reason, check!\n',fname);
+                            end
                         
                     end
          end
