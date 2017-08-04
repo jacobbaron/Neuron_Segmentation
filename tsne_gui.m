@@ -595,7 +595,11 @@ ID_tab.Units='pixels';
                     %    get_ROI('preloaded');
 
                     else
+                        disp(sprintf('pre-alignment size = '));
+                        size(img_data.img_stacks{1})
                         run_alignment('',img_data);
+                        disp(sprintf('post-alignment size = '));
+                        size(tsne_data.aligned_red_img)
                         img_data = rmfield(img_data,'img_stacks');
                         tsne_data.full_img_size = size(tsne_data.aligned_green_img);
                         if ~batch
@@ -832,7 +836,11 @@ ID_tab.Units='pixels';
         if ~isempty(parems)
             parems=cellfun(@str2num,parems);
             img_data=varargin{2};
-            
+            if nargin>2
+                pass1 = varargin{3};
+            else
+                pass1=1;
+            end
             err=0;
             %try
                 
@@ -849,11 +857,23 @@ ID_tab.Units='pixels';
                          'minstep',parems(6),'maxstep',parems(7),'scalexy pass 2',parems(4),...
                          'doublepass',parems(3));
                 else
-                    [tsne_data.aligned_green_img, tsne_data.aligned_red_img]=...
-                         imregbox(img_data.img_stacks{2}, img_data.img_stacks{1},...
-                         'scalexy',parems(1),'scalez',parems(2),'maxiter',parems(5),...
-                         'minstep',parems(6),'maxstep',parems(7),'scalexy pass 2',parems(4),...
-                         'doublepass',parems(3),'crop',crop);
+                    imSize = size(img_data.img_stacks{2});
+                     options_rigid = NoRMCorreSetParms('d1',...
+                                        imSize(1),'d2',imSize(2),'d3',imSize(3),...
+                                        'bin_width',30,'max_shift',40,'us_fac',20);
+                    [tsne_data.aligned_red_img,shifts] = ...
+                                        normcorre(img_data.img_stacks{2},options_rigid);
+                                    
+                    tsne_data.aligned_green_img = apply_shifts_serial(...
+                        img_data.img_stacks{1},...
+                        shifts,options_rigid);
+%                     [tsne_data.aligned_green_img, tsne_data.aligned_red_img]=...
+%                          imregbox(img_data.img_stacks{2}, img_data.img_stacks{1},...
+%                          'scalexy',parems(1),'scalez',parems(2),'maxiter',parems(5),...
+%                          'minstep',parems(6),'maxstep',parems(7),'scalexy pass 2',parems(4),...
+%                          'doublepass',parems(3),'crop',crop,'pass1',pass1);
+                        
+
                 end
                 
                 
@@ -1292,20 +1312,31 @@ ID_tab.Units='pixels';
                             for jj=1:length(ROIs)+1
                                 if jj==1
                                     img_data = importimg;
+                                    full_green_img = tsne_data.aligned_green_img;
+                                    full_red_img = tsne_data.aligned_red_img;
                                 else
-                                    ROI = ROIs{jj-1};
+                                    ROI = round(ROIs{jj-1});
                                     img_dataROI = img_data;
                                     img_dataROI.img_stacks{1} = ....
-                                        tsne_data.aligned_green_img(...
-                                        ROI(2):ROI(2)+ROI(4),...
+                                        full_green_img(ROI(2):ROI(2)+ROI(4),...
                                         ROI(1):ROI(1)+ROI(3),:,:);
                                     img_dataROI.img_stacks{2} = ...
-                                        tsne_data.aligned_green_img(...
-                                        ROI(2):ROI(2)+ROI(4),...
+                                        full_red_img(ROI(2):ROI(2)+ROI(4),...
                                         ROI(1):ROI(1)+ROI(3),:,:);
+                                    imSize = size(img_dataROI.img_stacks{2});
+                                    options_rigid = NoRMCorreSetParms('d1',...
+                                        imSize(1),'d2',imSize(2),'d3',imSize(3),...
+                                        'bin_width',30,'max_shift',40,'us_fac',20);
+                                    [tsne_data.aligned_red_img,shifts] = ...
+                                        normcorre(img_dataROI.img_stacks{2},options_rigid);
+                                    
+                                    tsne_data.aligned_green_img = apply_shifts_serial(...
+                                        img_dataROI.img_stacks{1},...
+                                        shifts,options_rigid);
                                 end
                                 display_movie;
                                 run_pca_batch;
+                                tsne_data.full_img_size = size(tsne_data.aligned_green_img);
                                 tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
     %%
                                 max_red = max(tsne_data.aligned_red_img(:));
@@ -1325,13 +1356,14 @@ ID_tab.Units='pixels';
                                 if jj==1
                                     roiNum='';
                                 else
-                                    roiNum=['_',num2str(ii-1)];
+                                    roiNum=['_',num2str(jj-1)];
                                 end
-                                aligned_file = fullfile('aligned',[fname,'aligned',roiNum,'.mat'])
+                                aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
 
                                 save(aligned_file,'-struct','tsne_data');
-                                batch = 0;
+                                
                             end
+                            batch = 0;
 %                         catch
 %                             fprintf('Movie %s failed to load for some reason, check!\n',fname);
 %                             end

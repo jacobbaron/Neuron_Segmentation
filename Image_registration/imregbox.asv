@@ -120,12 +120,12 @@ if pass1
 
     min_red_stack_aligned=min(red_stack_aligned,[],4);
     idx=find(min_red_stack_aligned~=0);
-    %[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
+    [i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
+    red_stack_cropped=box_filt4D(red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:),...
+        [scalexy2,scalexy2,1]);
     %red_stack_cropped=box_filt4D(red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:),...
      %   [scalexy2,scalexy2,1]);
-     red_stack_cropped=box_filt4D(red_stack_aligned,[scalexy2,scalexy2,1]);
-    %green_stack_cropped=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
-    green_stack_cropped=green_stack_aligned;
+    green_stack_cropped=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
     red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
     fixed_max=red_stack_cropped_max(:,:,1);
     red_stack_aligned=red_stack_cropped;
@@ -193,11 +193,11 @@ if doublepass==2
         end
     end
 end
-%min_red_stack_aligned=min(red_stack_aligned,[],4);
-%idx=find(min_red_stack_aligned~=0);
-%[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
-%red_stack_aligned = red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
-%green_stack_aligned=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
+min_red_stack_aligned=min(red_stack_aligned,[],4);
+idx=find(min_red_stack_aligned~=0);
+[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
+red_stack_aligned = red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
+green_stack_aligned=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
 
 green_stack_aligned=gpu_medfilt4( green_stack_aligned,'green',2,0);
 red_stack_aligned=gpu_medfilt4(red_stack_aligned,'red',2,0);
