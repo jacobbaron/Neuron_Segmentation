@@ -7,3 +7,4 @@ Compiled/Compiled_data_backup/*
 *.csv
 *.fig
 Compiled/score_matrix.mat
+*.asv

@@ -462,6 +462,7 @@ ID_tab.Units='pixels';
 %                 img_data.filename_log=tsne_data.filenames{2};
             filename=tsne_data.filenames{1};
              end
+<<<<<<< HEAD
 %              if isa(tsne_data.aligned_green_img,'uint16')
 %                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
 %                     tsne_data.scale_factor_green;
@@ -472,6 +473,18 @@ ID_tab.Units='pixels';
 %                 tsne_data.cropped_img = cast(tsne_data.cropped_red_img,'double')/...
 %                     tsne_data.scale_factor_red;
 %              end
+=======
+             if isa(tsne_data.aligned_green_img,'uint16')
+                tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
+                    tsne_data.scale_factor_green;
+                 tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
+                    tsne_data.scale_factor_red;
+                tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
+                    tsne_data.scale_factor_green;
+                tsne_data.cropped_img = cast(tsne_data.cropped_red_img,'double')/...
+                    tsne_data.scale_factor_red;
+             end
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
              
             %filename=img_data.filename;
             setup_figures;
@@ -1311,12 +1324,18 @@ ID_tab.Units='pixels';
                             end
                             for jj=1:length(ROIs)+1
                                 if jj==1
+<<<<<<< HEAD
                                     disp('preliminary aligning');
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
                                     img_data = importimg;
                                     full_green_img = tsne_data.aligned_green_img;
                                     full_red_img = tsne_data.aligned_red_img;
                                 else
+<<<<<<< HEAD
                                     disp('secondary aligning');
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
                                     ROI = round(ROIs{jj-1});
                                     img_dataROI = img_data;
                                     img_dataROI.img_stacks{1} = ....
@@ -1329,7 +1348,10 @@ ID_tab.Units='pixels';
                                     options_rigid = NoRMCorreSetParms('d1',...
                                         imSize(1),'d2',imSize(2),'d3',imSize(3),...
                                         'bin_width',30,'max_shift',40,'us_fac',20);
+<<<<<<< HEAD
                                     
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
                                     [tsne_data.aligned_red_img,shifts] = ...
                                         normcorre(img_dataROI.img_stacks{2},options_rigid);
                                     
@@ -1342,6 +1364,7 @@ ID_tab.Units='pixels';
                                 tsne_data.full_img_size = size(tsne_data.aligned_green_img);
                                 tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
     %%
+<<<<<<< HEAD
 %                                 max_red = max(tsne_data.aligned_red_img(:))
 %                                 min_red = min(tsne_data.aligned_red_img(:))
 %                                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/...
@@ -1354,6 +1377,20 @@ ID_tab.Units='pixels';
 %                                     (max_green-min_green),'uint16');
 %                                 tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
 %                                 tsne_data.aligned_green_img = scaled_green;
+=======
+                                max_red = max(tsne_data.aligned_red_img(:));
+                                min_red = min(tsne_data.aligned_red_img(:));
+                                scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/...
+                                    (max_red-min_red),'uint16');
+                                tsne_data.scale_factor_red = (2^16-1)/(max_red-min_red);
+                                tsne_data.aligned_red_img = scaled_red;
+                                max_green = max(tsne_data.aligned_green_img(:));
+                                min_green = min(tsne_data.aligned_green_img(:));
+                                scaled_green = cast((tsne_data.aligned_green_img-min_green)*(2^16-1)/...
+                                    (max_green-min_green),'uint16');
+                                tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
+                                tsne_data.aligned_green_img = scaled_green;
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
       %%                                                                                                              
                                 mkdir('aligned');
                                 if jj==1
@@ -2051,6 +2088,7 @@ ID_tab.Units='pixels';
                         msgbox('Could Not Save Figure Successfully');
                     end
                 end
+<<<<<<< HEAD
 %                 max_red = max([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
 %                 min_red = min([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
 %                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/(max_red-min_red),'uint16');
@@ -2078,6 +2116,35 @@ ID_tab.Units='pixels';
 %                     tsne_data.scale_factor_green;
 %                 tsne_data.cropped_red_img = cast(tsne_data.cropped_red_img,'double')/...
 %                     tsne_data.scale_factor_red;
+=======
+                max_red = max([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
+                min_red = min([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
+                scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/(max_red-min_red),'uint16');
+                tsne_data.scale_factor_red = (2^16-1)/(max_red-min_red);
+                tsne_data.aligned_red_img = scaled_red;
+                max_green = max([tsne_data.aligned_green_img(:);tsne_data.cropped_img(:)]);
+                min_green = min([tsne_data.aligned_green_img(:);tsne_data.cropped_img(:)]);
+                tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
+                scaled_green = cast((tsne_data.aligned_green_img-min_green)*...
+                    tsne_data.scale_factor_green,'uint16');
+                
+                tsne_data.aligned_green_img = scaled_green;
+                %min_cropped = min(tsne_data.cropped_img);
+                %max_cropped = max(tsne_data.cropped_img);
+                %tsne_data.scale_factor_cropped = (2^16-1)/(max_cropped-min_cropped);
+                tsne_data.cropped_img = cast((tsne_data.cropped_img-min_green)*...
+                    tsne_data.scale_factor_green,'uint16');
+                save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
+                saved=1;
+                tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
+                    tsne_data.scale_factor_green;
+                 tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
+                    tsne_data.scale_factor_red;
+                tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
+                    tsne_data.scale_factor_green;
+                tsne_data.cropped_red_img = cast(tsne_data.cropped_red_img,'double')/...
+                    tsne_data.scale_factor_red;
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
                 if ~batch
                     sv=msgbox('Data Saved!');            
                     uiwait(sv);
@@ -2090,6 +2157,7 @@ ID_tab.Units='pixels';
             tsne_data.foreground = foreground_img;
             save_export_btn.String = 'Saving...';
             save_export_btn.BackgroundColor = [0.94,0.94,0.94];
+<<<<<<< HEAD
             switch more_roi
                 case 'Yes'
                 if isempty(batch_fname_idx)
@@ -2110,6 +2178,33 @@ ID_tab.Units='pixels';
              mkdir('prepared');
              [filedir,name]= fileparts(strcat(tsne_data.filenames{1},'_aligned.mat'));
             aligned_file = fullfile(filedir,'aligned',[name,'.mat']); 
+=======
+            aligned_file = f_list_glob{ii_glob};
+            [~,prep_filename] = fileparts(strrep(f_list_glob{ii_glob},'aligned','prepared'));
+            switch more_roi
+                case 'Yes'
+                    if isempty(batch_fname_idx)
+                        batch_fname_idx=0;
+                    end
+                    batch_fname_idx= batch_fname_idx+1;
+                    roi_idx = ['_',num2str(batch_fname_idx)];
+                    
+                    
+                case 'No'
+                    if isempty(batch_fname_idx)                        
+                        roi_idx = '';
+                    else
+                        batch_fname_idx= batch_fname_idx+1;                    
+                        roi_idx = ['_',num2str(batch_fname_idx)];
+                        batch_fname_idx=[];
+                    end
+            end
+            
+            
+             mkdir('prepared');
+             prep_filename = fullfile('prepared',[prep_filename,batch_fname_idx','.mat']);
+            aligned_file = fullfile(filedir,'aligned',f_list_glob{ii_glob}); 
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
              [filedir,name]= fileparts(filenamez);
             prepared_file = fullfile(filedir,'prepared',[name,'.mat']);
            switch more_roi
