@@ -1939,7 +1939,7 @@ ID_tab.Units='pixels';
             Img_yz = squeeze(max(Img_full,[],2));
             Img_xz = squeeze(max(Img_full,[],1));
             Img_xy = squeeze(max(Img_full,[],3));
-            Img_max_xyz=max(Img_full(:)) * ones(size(Img_full,1)+size(Img_full,3)+1,...
+            Img_max_xyz=double(max(Img_full(:))) * ones(size(Img_full,1)+size(Img_full,3)+1,...
                 size(Img_full,2)+size(Img_full,3)+1,size(Img_full,4));
             Img_max_xyz(1:size(Img_full,1),1:size(Img_full,2),:)= Img_xy;
             Img_max_xyz(size(Img_full,1)+2:end, 1:size(Img_full,2),:) = permute(Img_xz,[2 1 3]);
