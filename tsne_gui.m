@@ -1425,6 +1425,7 @@ ID_tab.Units='pixels';
                 
             end
             
+<<<<<<< HEAD
 %             if isa(tsne_data.aligned_green_img,'uint16')
 %                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
 %                     tsne_data.scale_factor_green;
@@ -1433,6 +1434,16 @@ ID_tab.Units='pixels';
 %                tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
 %                    tsne_data.scale_factor_cropped;
 %             end
+=======
+            if isa(tsne_data.aligned_green_img,'uint16')
+                tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
+                    cast(tsne_data.scale_factor_green,'double');
+                tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
+                    cast(tsne_data.scale_factor_red,'double');
+               % tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
+               %     tsne_data.scale_factor_cropped;
+            end
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
             
             
             
@@ -2090,29 +2101,31 @@ ID_tab.Units='pixels';
             tsne_data.foreground = foreground_img;
             save_export_btn.String = 'Saving...';
             save_export_btn.BackgroundColor = [0.94,0.94,0.94];
+            aligned_file = fullfile('aligned',f_list_glob{ii_glob});
+            [~,prep_filename] = fileparts(strrep(f_list_glob{ii_glob},'aligned','prepared'));
             switch more_roi
                 case 'Yes'
-                if isempty(batch_fname_idx)
-                    batch_fname_idx=0;
-                end
-                batch_fname_idx= batch_fname_idx+1;
+                    if isempty(batch_fname_idx)
+                        batch_fname_idx=0;
+                    end
+                    batch_fname_idx= batch_fname_idx+1;
+                    roi_idx = ['_',num2str(batch_fname_idx)];
                     
-                filenamez = strcat(tsne_data.filenames{1},'_prepared_',num2str(batch_fname_idx),'.mat');
+                    
                 case 'No'
                     if isempty(batch_fname_idx)                        
-                        filenamez = strcat(tsne_data.filenames{1},'_prepared.mat');
+                        roi_idx = '';
                     else
                         batch_fname_idx= batch_fname_idx+1;                    
-                        filenamez = strcat(tsne_data.filenames{1},'_prepared_',num2str(batch_fname_idx),'.mat');
+                        roi_idx = ['_',num2str(batch_fname_idx)];
                         batch_fname_idx=[];
                     end
-            end
-             mkdir('prepared');
-             [filedir,name]= fileparts(strcat(tsne_data.filenames{1},'_aligned.mat'));
-            aligned_file = fullfile(filedir,'aligned',[name,'.mat']); 
-             [filedir,name]= fileparts(filenamez);
-            prepared_file = fullfile(filedir,'prepared',[name,'.mat']);
-           switch more_roi
+            end                       
+            mkdir('prepared');
+            prepared_file= fullfile('prepared',[prep_filename,roi_idx,'.mat']);
+
+
+            switch more_roi
                case 'Yes'
                    copyfile(aligned_file,prepared_file);
                case 'No'

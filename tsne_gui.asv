@@ -464,6 +464,7 @@ ID_tab.Units='pixels';
              end
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 %              if isa(tsne_data.aligned_green_img,'uint16')
 %                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
 %                     tsne_data.scale_factor_green;
@@ -477,6 +478,8 @@ ID_tab.Units='pixels';
 =======
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
              if isa(tsne_data.aligned_green_img,'uint16')
                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
                     tsne_data.scale_factor_green;
@@ -488,6 +491,9 @@ ID_tab.Units='pixels';
                     tsne_data.scale_factor_red;
              end
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+=======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
@@ -1332,7 +1338,10 @@ ID_tab.Units='pixels';
                                 if jj==1
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     disp('preliminary aligning');
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
@@ -1343,7 +1352,10 @@ ID_tab.Units='pixels';
                                 else
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     disp('secondary aligning');
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
@@ -1362,7 +1374,10 @@ ID_tab.Units='pixels';
                                         'bin_width',30,'max_shift',40,'us_fac',20);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
@@ -1381,6 +1396,7 @@ ID_tab.Units='pixels';
     %%
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 %                                 max_red = max(tsne_data.aligned_red_img(:))
 %                                 min_red = min(tsne_data.aligned_red_img(:))
 %                                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/...
@@ -1396,6 +1412,8 @@ ID_tab.Units='pixels';
 =======
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
                                 max_red = max(tsne_data.aligned_red_img(:));
                                 min_red = min(tsne_data.aligned_red_img(:));
                                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/...
@@ -1409,6 +1427,9 @@ ID_tab.Units='pixels';
                                 tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
                                 tsne_data.aligned_green_img = scaled_green;
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+=======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
@@ -2111,6 +2132,7 @@ ID_tab.Units='pixels';
                 end
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 %                 max_red = max([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
 %                 min_red = min([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
 %                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/(max_red-min_red),'uint16');
@@ -2141,6 +2163,8 @@ ID_tab.Units='pixels';
 =======
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
                 max_red = max([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
                 min_red = min([tsne_data.aligned_red_img(:);tsne_data.cropped_red_img(:)]);
                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/(max_red-min_red),'uint16');
@@ -2169,6 +2193,9 @@ ID_tab.Units='pixels';
                 tsne_data.cropped_red_img = cast(tsne_data.cropped_red_img,'double')/...
                     tsne_data.scale_factor_red;
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+=======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
@@ -2184,6 +2211,7 @@ ID_tab.Units='pixels';
             tsne_data.foreground = foreground_img;
             save_export_btn.String = 'Saving...';
             save_export_btn.BackgroundColor = [0.94,0.94,0.94];
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             switch more_roi
@@ -2207,6 +2235,8 @@ ID_tab.Units='pixels';
              [filedir,name]= fileparts(strcat(tsne_data.filenames{1},'_aligned.mat'));
             aligned_file = fullfile(filedir,'aligned',[name,'.mat']); 
 =======
+=======
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
             aligned_file = f_list_glob{ii_glob};
@@ -2235,6 +2265,9 @@ ID_tab.Units='pixels';
              prep_filename = fullfile('prepared',[prep_filename,batch_fname_idx','.mat']);
             aligned_file = fullfile(filedir,'aligned',f_list_glob{ii_glob}); 
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+=======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
 =======
 >>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
