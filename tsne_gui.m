@@ -1107,7 +1107,9 @@ ID_tab.Units='pixels';
         rng=tsne_data.roi;
         cropped_idx=true(tsne_data.full_img_size);
         cropped_idx(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:) = false;
-        tsne_data.background = cast(tsne_data.background,'int16');
+        dtype = class(tsne_data.aligned_green_img);
+        tsne_data.background = cast(tsne_data.background,dtype);
+        
         tsne_data.aligned_green_img=tsne_data.aligned_green_img-repmat(tsne_data.background,1,1,1,...
             size(tsne_data.aligned_green_img,4));
         
@@ -1511,8 +1513,8 @@ ID_tab.Units='pixels';
         img=imshow(tsne_data.aligned_green_img(:,:,Z,S), [Rmin Rmax],'Parent',ax_foreground);
         cmap=[0,0,0;1,1,1];
         cmap1=colormap(ax_foreground,gray(100));
-        imin=double(min(green_mov(green_mov(:,:,:,1)>0)));
-        imax=double(max(green_mov(:)));
+        imin=min(green_mov(green_mov(:,:,:,1)>0));
+        imax=max(green_mov(:));
         scale_factor=(size(cmap1,1)-1)/(imax-imin);
         %C1=(tsne_data.aligned_green_img-imin)
         hold(ax_foreground,'on');
