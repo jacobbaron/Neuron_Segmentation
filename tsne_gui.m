@@ -1107,7 +1107,7 @@ ID_tab.Units='pixels';
         rng=tsne_data.roi;
         cropped_idx=true(tsne_data.full_img_size);
         cropped_idx(rng(1,1):rng(1,2),rng(2,1):rng(2,2),:,:) = false;
-
+        tsne_data.background = cast(tsne_data.background,'int16');
         tsne_data.aligned_green_img=tsne_data.aligned_green_img-repmat(tsne_data.background,1,1,1,...
             size(tsne_data.aligned_green_img,4));
         
@@ -1425,7 +1425,7 @@ ID_tab.Units='pixels';
                 
             end
             
-<<<<<<< HEAD
+%<<<<<<< HEAD
 %             if isa(tsne_data.aligned_green_img,'uint16')
 %                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
 %                     tsne_data.scale_factor_green;
@@ -1433,17 +1433,17 @@ ID_tab.Units='pixels';
 %                     tsne_data.scale_factor_red;
 %                tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
 %                    tsne_data.scale_factor_cropped;
+% %             end
+% %=======
+%             if isa(tsne_data.aligned_green_img,'uint16')
+%                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
+%                     cast(tsne_data.scale_factor_green,'double');
+%                 tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
+%                     cast(tsne_data.scale_factor_red,'double');
+%                % tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
+%                %     tsne_data.scale_factor_cropped;
 %             end
-=======
-            if isa(tsne_data.aligned_green_img,'uint16')
-                tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
-                    cast(tsne_data.scale_factor_green,'double');
-                tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
-                    cast(tsne_data.scale_factor_red,'double');
-               % tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
-               %     tsne_data.scale_factor_cropped;
-            end
->>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
+% %>>>>>>> 1643a6db8e6ddfbcb79d6a3611b76b6a7a57274a
             
             
             
@@ -1617,7 +1617,7 @@ ID_tab.Units='pixels';
         if tsned
             Alpha=str2num(alpha_box.String);
             k=str2num(k_box.String);
-            tsne_data=CIA_LSBDC(double(tsne_data,tsne_data.aligned_green_img),...
+            tsne_data=CIA_LSBDC(tsne_data,double(tsne_data.aligned_green_img),...
                 tsne_data.odor_seq,'alpha',Alpha,'k',k);
             
             tsne_data.neuronID=cellfun(@num2str,...
