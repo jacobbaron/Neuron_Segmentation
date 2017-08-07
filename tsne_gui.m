@@ -1372,7 +1372,7 @@ ID_tab.Units='pixels';
          end
     end
     function batch_ROI_foreground(varargin)
-        f_list_glob = uigetfile('.\aligned\*_aligned.mat','MultiSelect','on');  
+        f_list_glob = uigetfile('.\aligned\*_aligned*.mat','MultiSelect','on');  
         if ischar(f_list_glob)
             f_list_glob={f_list_glob};
         end
