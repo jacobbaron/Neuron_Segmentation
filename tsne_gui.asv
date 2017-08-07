@@ -1425,14 +1425,14 @@ ID_tab.Units='pixels';
                 
             end
             
-%             if isa(tsne_data.aligned_green_img,'uint16')
-%                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
-%                     tsne_data.scale_factor_green;
-%                 tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
-%                     tsne_data.scale_factor_red;
-%                tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
-%                    tsne_data.scale_factor_cropped;
-%             end
+            if isa(tsne_data.aligned_green_img,'uint16')
+                tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
+                    tsne_data.scale_factor_green;
+                tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
+                    tsne_data.scale_factor_red;
+               % tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
+               %     tsne_data.scale_factor_cropped;
+            end
             
             
             
@@ -1588,7 +1588,7 @@ ID_tab.Units='pixels';
         
         
         
-       tsne_data_no_cluster=CIA_TSNE(double(tsne_data.aligned_green_img),tsne_data.foreground,...
+       tsne_data_no_cluster=CIA_TSNE(tsne_data.aligned_green_img,tsne_data.foreground,...
            tsne_data.odor_seq,'tsne_iter',max_iter,'use_space',use_spatial_chkbox.Value,...
            'scale_factor',str2double(scale_factor_box.String));
        
@@ -1606,7 +1606,7 @@ ID_tab.Units='pixels';
         if tsned
             Alpha=str2num(alpha_box.String);
             k=str2num(k_box.String);
-            tsne_data=CIA_LSBDC(double(tsne_data,tsne_data.aligned_green_img),...
+            tsne_data=CIA_LSBDC(tsne_data,tsne_data.aligned_green_img,...
                 tsne_data.odor_seq,'alpha',Alpha,'k',k);
             
             tsne_data.neuronID=cellfun(@num2str,...
