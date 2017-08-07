@@ -860,13 +860,16 @@ ID_tab.Units='pixels';
                     imSize = size(img_data.img_stacks{2});
                      options_rigid = NoRMCorreSetParms('d1',...
                                         imSize(1),'d2',imSize(2),'d3',imSize(3),...
-                                        'bin_width',30,'max_shift',40,'us_fac',20);
+                                        'bin_width',30,'max_shift',40,'us_fac',20,'boundary',...
+                                        'NaN');
                     [tsne_data.aligned_red_img,shifts] = ...
                                         normcorre(img_data.img_stacks{2},options_rigid);
                                     
                     tsne_data.aligned_green_img = apply_shifts_serial(...
                         img_data.img_stacks{1},...
                         shifts,options_rigid);
+                    tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'uint16');
+                    tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'uint16');
 %                     [tsne_data.aligned_green_img, tsne_data.aligned_red_img]=...
 %                          imregbox(img_data.img_stacks{2}, img_data.img_stacks{1},...
 %                          'scalexy',parems(1),'scalez',parems(2),'maxiter',parems(5),...
@@ -1314,12 +1317,12 @@ ID_tab.Units='pixels';
                             for jj=1:length(ROIs)+1
                                 if jj==1
                                     disp('preliminary aligning');
-                                    img_data = importimg;
+                                    img_data = importimg; %imports and aligns entire movie
                                     full_green_img = tsne_data.aligned_green_img;
                                     full_red_img = tsne_data.aligned_red_img;
                                 else
                                     disp('secondary aligning');
-                                    ROI = round(ROIs{jj-1});
+                                    ROI = round(ROIs{jj-1}); %crop initially aligned movie
                                     img_dataROI = img_data;
                                     img_dataROI.img_stacks{1} = ....
                                         full_green_img(ROI(2):ROI(2)+ROI(4),...
@@ -1330,7 +1333,8 @@ ID_tab.Units='pixels';
                                     imSize = size(img_dataROI.img_stacks{2});
                                     options_rigid = NoRMCorreSetParms('d1',...
                                         imSize(1),'d2',imSize(2),'d3',imSize(3),...
-                                        'bin_width',30,'max_shift',40,'us_fac',20);
+                                        'bin_width',30,'max_shift',40,'us_fac',20,'boundary',...
+                                        'NaN');
                                     
                                     [tsne_data.aligned_red_img,shifts] = ...
                                         normcorre(img_dataROI.img_stacks{2},options_rigid);
@@ -1338,11 +1342,18 @@ ID_tab.Units='pixels';
                                     tsne_data.aligned_green_img = apply_shifts_serial(...
                                         img_dataROI.img_stacks{1},...
                                         shifts,options_rigid);
+                                    tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'uint16');
+                                    tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'uint16');
+                                    
                                 end
+                                [tsne_data.aligned_red_img, tsne_data.aligned_green_img] =...
+                                    remove_zeros(tsne_data.aligned_red_img,tsne_data.aligned_green_img);
                                 display_movie;
                                 run_pca_batch;
                                 tsne_data.full_img_size = size(tsne_data.aligned_green_img);
                                 tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
+                                %remove border zeros from alignment
+                                
     %%
 %                                 max_red = max(tsne_data.aligned_red_img(:))
 %                                 min_red = min(tsne_data.aligned_red_img(:))
@@ -1513,8 +1524,8 @@ ID_tab.Units='pixels';
         img=imshow(tsne_data.aligned_green_img(:,:,Z,S), [Rmin Rmax],'Parent',ax_foreground);
         cmap=[0,0,0;1,1,1];
         cmap1=colormap(ax_foreground,gray(100));
-        imin=min(green_mov(green_mov(:,:,:,1)>0));
-        imax=max(green_mov(:));
+        imin=double(min(green_mov(green_mov(:,:,:,1)>0)));
+        imax=double(max(green_mov(:)));
         scale_factor=(size(cmap1,1)-1)/(imax-imin);
         %C1=(tsne_data.aligned_green_img-imin)
         hold(ax_foreground,'on');
