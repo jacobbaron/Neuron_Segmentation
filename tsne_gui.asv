@@ -1424,9 +1424,9 @@ ID_tab.Units='pixels';
             
             if isa(tsne_data.aligned_green_img,'uint16')
                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
-                    cast(tsne_data.scale_factor_green,'double');
+                    tsne_data.scale_factor_green;
                 tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'double')/...
-                    cast(tsne_data.scale_factor_red,'double');
+                    tsne_data.scale_factor_red;
                % tsne_data.cropped_img = cast(tsne_data.cropped_img,'double')/...
                %     tsne_data.scale_factor_cropped;
             end
@@ -2087,7 +2087,7 @@ ID_tab.Units='pixels';
             tsne_data.foreground = foreground_img;
             save_export_btn.String = 'Saving...';
             save_export_btn.BackgroundColor = [0.94,0.94,0.94];
-            aligned_file = fullfile('aligned',f_list_glob{ii_glob});
+            aligned_file = f_list_glob{ii_glob};
             [~,prep_filename] = fileparts(strrep(f_list_glob{ii_glob},'aligned','prepared'));
             switch more_roi
                 case 'Yes'
@@ -2106,12 +2106,15 @@ ID_tab.Units='pixels';
                         roi_idx = ['_',num2str(batch_fname_idx)];
                         batch_fname_idx=[];
                     end
-            end                       
-            mkdir('prepared');
-            prepared_file= fullfile('prepared',[prep_filename,roi_idx,'.mat']);
-
-
-            switch more_roi
+            end
+            
+            
+             mkdir('prepared');
+             prep_filename = fullfile('prepared',[prep_filename,batch_fname_idx','.mat']);
+            aligned_file = fullfile(filedir,'aligned',f_list_glob{ii_glob}); 
+             [filedir,name]= fileparts(filenamez);
+            prepared_file = fullfile(filedir,'prepared',[name,'.mat']);
+           switch more_roi
                case 'Yes'
                    copyfile(aligned_file,prepared_file);
                case 'No'
