@@ -408,7 +408,7 @@ ID_tab.Units='pixels';
         stuff2delete=~ismember(compare_tab.Children,[reset_compare_btn]);
         delete(compare_tab.Children);
     end
-    function delete_figs(varagin) %deletes other figures that are not the tsne_gui
+    function delete_figs(varargin) %deletes other figures that are not the tsne_gui
         all_figs=get(0,'Children');
         other_figs=all_figs(~(all_figs==f_tSNE));
         close(other_figs);
@@ -616,6 +616,41 @@ ID_tab.Units='pixels';
             end
         end
     end
+    function img_data = importimg_batch(fname,fnamelog)
+        delete_figs;
+                    
+        if ~isempty(strfind(fname,'.nd2'))                     
+            img_data=import_nd2_files(1,fname,fnamelog);
+        elseif ~isempty(strfind(fname,'.h5'))
+            img_data=import_h5_file(1,fname,fnamelog);
+        end
+        if strfind(fnamelog,'.mat')>0
+            ld=load(fnamelog);
+            tsne_data.log_data=ld.log_data;
+        end
+        tsne_data=struct;
+        tsne_data.odor_inf=load('odor_inf.mat');
+        erase_ID_tab;
+        tsne_data.odor_seq=img_data.odor_seq;
+        tsne_data.t=img_data.t;
+         if isfield(img_data,'pixelSize')
+            tsne_data.pixelSize=img_data.pixelSize;
+        end
+        if isfield(img_data,'which_side')
+            tsne_data.which_side=img_data.which_side;
+        end
+
+        if isfield(img_data,'which_side')
+            larva_side=img_data.which_side;
+        end
+        tsne_data.filenames={img_data.filename,img_data.filename_log};
+        movie_loaded=1;IDed=0;tsned=0;clustered=0;pca_done=0;
+        undo_item.Enable='Off';
+        erase_compare_tab;
+        try
+            close(fLeg);
+        end
+    end
 
 
 %% interactive functions
@@ -742,7 +777,7 @@ ID_tab.Units='pixels';
     function setup_figures(varargin)
         %Img4D=tsne_data.aligned_green_img;
         sno = size(tsne_data.aligned_green_img,4);  % number of slices
-        S = round(sno/2);
+        S = round(1);
         zsl = size(tsne_data.aligned_green_img,3);
         Z = round(zsl/2);
         global InitialCoord;
@@ -1240,6 +1275,8 @@ ID_tab.Units='pixels';
                 imgRGB = import_first_frame_h5(f_list_glob{ii_glob});
                 delete(ax_foreground.Children);
                 imshow(imgRGB,'Parent',ax_foreground);
+                ax_foreground.XLim=[0,size(imgRGB,2)];
+                ax_foreground.YLim=[0,size(imgRGB,1)];
                 title(ax_foreground,'Select ROIs, press Esc when done')
                 bkgd_ROI_saving = 'step0';
                 jj=1;
@@ -1286,6 +1323,21 @@ ID_tab.Units='pixels';
         
         
     end
+    function [redAligned,greenAligned,shifts]=normcorre_rigid_align(redImg,greenImg)
+        imSize = size(redImg); 
+        options_rigid = NoRMCorreSetParms('d1',...
+            imSize(1),'d2',imSize(2),'d3',imSize(3),...
+            'bin_width',30,'max_shift',40,'us_fac',20,'boundary',...
+            'NaN');
+        [redAligned,shifts] = ...
+              normcorre(redImg,options_rigid);
+
+        greenAligned= apply_shifts_serial(...
+            greenImg,...
+            shifts,options_rigid);
+        redAligned = cast(redAligned,'uint16');
+        greenAligned = cast(greenAligned,'uint16');
+    end
     function batch_alignment(varargin)
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
          
@@ -1315,14 +1367,22 @@ ID_tab.Units='pixels';
                                 ROIs = [];
                             end
                             for jj=1:length(ROIs)+1
+                                try
                                 if jj==1
                                     disp('preliminary aligning');
-                                    img_data = importimg; %imports and aligns entire movie
+                                    img_data = importimg_batch(fname,fnamelog);
+                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
+                                        shiftsPrelim] = normcorre_rigid_align(...
+                                        img_data.img_stacks{2},img_data.img_stacks{1});
+                                    
                                     full_green_img = tsne_data.aligned_green_img;
                                     full_red_img = tsne_data.aligned_red_img;
                                 else
                                     disp('secondary aligning');
                                     ROI = round(ROIs{jj-1}); %crop initially aligned movie
+                                    ROI(1) = ROI(1)+round(shiftsPrelim(1).shifts(:,:,:,2));
+                                    ROI(2) = ROI(2)+round(shiftsPrelim(1).shifts(:,:,:,1));
+                                    ROI = keep_in_bounds(ROI,size(full_red_img));
                                     img_dataROI = img_data;
                                     img_dataROI.img_stacks{1} = ....
                                         full_green_img(ROI(2):ROI(2)+ROI(4),...
@@ -1330,24 +1390,15 @@ ID_tab.Units='pixels';
                                     img_dataROI.img_stacks{2} = ...
                                         full_red_img(ROI(2):ROI(2)+ROI(4),...
                                         ROI(1):ROI(1)+ROI(3),:,:);
-                                    imSize = size(img_dataROI.img_stacks{2});
-                                    options_rigid = NoRMCorreSetParms('d1',...
-                                        imSize(1),'d2',imSize(2),'d3',imSize(3),...
-                                        'bin_width',30,'max_shift',40,'us_fac',20,'boundary',...
-                                        'NaN');
                                     
-                                    [tsne_data.aligned_red_img,shifts] = ...
-                                        normcorre(img_dataROI.img_stacks{2},options_rigid);
-                                    
-                                    tsne_data.aligned_green_img = apply_shifts_serial(...
-                                        img_dataROI.img_stacks{1},...
-                                        shifts,options_rigid);
-                                    tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'uint16');
-                                    tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'uint16');
+                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
+                                        ] = normcorre_rigid_align(...
+                                        img_dataROI.img_stacks{2},img_dataROI.img_stacks{1});
                                     
                                 end
                                 [tsne_data.aligned_red_img, tsne_data.aligned_green_img] =...
                                     remove_zeros(tsne_data.aligned_red_img,tsne_data.aligned_green_img);
+                                setup_figures;
                                 display_movie;
                                 run_pca_batch;
                                 tsne_data.full_img_size = size(tsne_data.aligned_green_img);
@@ -1377,7 +1428,10 @@ ID_tab.Units='pixels';
                                 aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
 
                                 save(aligned_file,'-struct','tsne_data');
-                                
+                                catch excp
+                                    
+                                    1;
+                                end
                             end
                             batch = 0;
 %                         catch
