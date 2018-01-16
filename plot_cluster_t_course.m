@@ -93,23 +93,30 @@ end
     else
         subplot(2,ratio,1)
     end
+    
     if isfield(tsne_data,'cropped_red_img')
         label_bkd = zeros(prod(tsne_data.full_img_size(1:3))-prod(size(labels)),1);
         full_labels = recreate_full_img(labels,label_bkd,tsne_data.full_img_size(1:3),tsne_data.roi);
         full_red_img = recreate_full_img(tsne_data.aligned_red_img,...
             tsne_data.cropped_red_img,tsne_data.full_img_size,tsne_data.roi);
+        red_img_proj = make_max_proj_img(full_red_img,tsne_data.pixelSize);
     else
         full_labels = labels;
         full_red_img = red_img;
     end
-    plot_3d_stuff(full_labels,labels2plot,full_red_img,cmap(labels2plot,:));
+    
+    plot_3d_stuff(full_labels,labels2plot,red_img_proj,cmap(labels2plot,:),size(full_red_img),tsne_data.pixelSize);
     axis equal
     ax3D=gca;
     ax3D.Position=[.01,.5,.3,.5];
-    if isfield(tsne_data,'cropped_img')
+    firstOdorIdx = find(tsne_data.odor_seq,1);
+    if isfield(tsne_data,'full_max_projs')
+        imgProj = tsne_data.full_max_projs;
+        
+    elseif isfield(tsne_data,'cropped_img')
         fullImg4D = recreate_full_img(tsne_data.aligned_green_img,...
             tsne_data.cropped_img,tsne_data.full_img_size,tsne_data.roi);
-        firstOdorIdx = find(tsne_data.odor_seq,1);
+        
         nmMaxProj = make_max_proj_img(fullImg4D(:,:,:,1:firstOdorIdx),tsne_data.pixelSize);
         maxProj = max(nmMaxProj(:));
         minProj = min(nmMaxProj(nmMaxProj>0));
@@ -126,19 +133,25 @@ end
         else
             imgProj = cat(3,zeros(size(nmMaxProj)),nmMaxProjScaled,zeros(size(nmMaxProj)));
         end      
+    else
+        nmMaxProj = make_max_proj_img(tsne_data.aligned_green_img(:,:,:,1:firstOdorIdx),tsne_data.pixelSize);
+        maxProj = max(nmMaxProj(:));
+        minProj = min(nmMaxProj(nmMaxProj>0));
+        nmMaxProjScaled = (nmMaxProj-minProj)/(maxProj-minProj);
         
         
+     end   
         subplot(2,ratio,ratio+1)
         imshow(imgProj)
         axis equal
         axProj = gca;
 
         axProj.Position = [0.01,.0,0.3,0.5];
-        t=title('f_0');
+        %t=title('f_0');
         t.Units = 'normalized';
         t.Color = [1,1,1];   
         t.Position(2) = .85;
-    end
+    
     
     
     if exist('axID','var')

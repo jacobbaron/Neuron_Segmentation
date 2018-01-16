@@ -1486,9 +1486,22 @@ ID_tab.Units='pixels';
             if ~isempty(prep_spot)
                 idx = fnm(prep_spot + length('prepared_'):end);
                 [pth,nme] = fileparts(tsne_data.filenames{1});
+                
                 tsne_data.filenames{1} = fullfile(pth,[nme,'_',idx]);
-                
-                
+                fullPrepDir = dir(fullfile('prepared',[nme,'.h5_prepared.mat']));
+                fullAlignDir = dir(fullfile('aligned',[nme,'.h5_aligned.mat']));
+                fullAlignName='';
+                if ~isempty(fullAlignDir)
+                    fullAlignName = fullfile('aligned',fullAlignDir.name);
+                elseif ~isempty(fullPrepDir)
+                    fullAlignName = fullfile('prepared',fullPrepDir.name);
+                end
+                if ~isempty(fullAlignName)
+                   full_img = load(fullAlignName,'aligned_green_img','aligned_red_img');
+                   tsne_data.full_max_projs = make_max_img_RGB(full_img.aligned_red_img,...
+                       full_img.aligned_green_img, tsne_data.pixelSize);
+                    
+                end
                 
             end
             
@@ -2080,6 +2093,8 @@ ID_tab.Units='pixels';
             try
                close(tcourse_fig); 
             end
+            
+            
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);         
             
              [~,name]=fileparts(filename);
