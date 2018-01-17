@@ -65,7 +65,7 @@ for ii=1:length(labels2plot)
     else
         add_legend=-1;
     end
-    patches=add_patches_to_plot(tsne_data.odor_conc_inf,gca,add_legend,tsne_data.odor_inf);
+    patches=add_patches_to_plot_multimix(tsne_data.odor_seq,gca,add_legend,tsne_data.odor_inf);
     
     if ii==1
         

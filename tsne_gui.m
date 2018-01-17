@@ -619,15 +619,15 @@ ID_tab.Units='pixels';
     function img_data = importimg_batch(fname,fnamelog)
         delete_figs;
                     
-        if ~isempty(strfind(fname,'.nd2'))                     
+        if contains(fname,'.nd2')                     
             img_data=import_nd2_files(1,fname,fnamelog);
-        elseif ~isempty(strfind(fname,'.h5'))
+        elseif contains(fname,'.h5')
             img_data=import_h5_file(1,fname,fnamelog);
         end
-        if strfind(fnamelog,'.mat')>0
-            ld=load(fnamelog);
-            tsne_data.log_data=ld.log_data;
-        end
+        %if strfind(fnamelog,'.mat')>0
+        %    ld=load(fnamelog);
+        %    tsne_data.log_data=ld.log_data;
+        %end
         tsne_data=struct;
         tsne_data.odor_inf=load('odor_inf.mat');
         erase_ID_tab;
@@ -687,10 +687,10 @@ ID_tab.Units='pixels';
              tline_compare(ii)=plot(ax_compare(ii),x,y,'k');                                                 
          end
         
-        [current_odor,current_conc]=compute_odor_conc(tsne_data.odor_seq(t),tsne_data.odor_inf);
-        
-        maxinten_t_text.String=sprintf('Frame %d / %d, t = %0.1f sec\n%s %s',...
-            t,length(tsne_data.t),tsne_data.t(t),current_conc, current_odor);
+        %[current_odor,current_conc]=compute_odor_conc(tsne_data.odor_seq(t),tsne_data.odor_inf);
+        [odorStrs]=compute_odor_conc(tsne_data.odor_seq,S);
+        odorStrs = [sprintf('t = %0.3f sec',tsne_data.t(t));odorStrs];
+        maxinten_t_text.String=sprintf('%s\n',odorStrs{:});
         ax_xyz.Children.CData=Img_max_xyz(:,:,t);
         %ax_xz.Children.CData=Img_xz(:,:,t)';
         %ax_yz.Children.CData=Img_yz(:,:,t);
@@ -706,11 +706,12 @@ ID_tab.Units='pixels';
         else
             set(stxthand, 'String', '2D image');
         end
-        [odor,conc]=compute_odor_conc(tsne_data.odor_seq(S),tsne_data.odor_inf);
+        
+        [odorStrs]=compute_odor_conc(tsne_data.odor_seq,S);
         
             t=tsne_data.t;
-        
-        odor_txt.String=sprintf('%s %s\nt = %0.3f sec',conc,odor,t(S));
+        odorStrs = [sprintf('t = %0.3f sec',t(S));odorStrs];
+        odor_txt.String=sprintf('%s\n',odorStrs{:});
         
         if ~isempty(event) && isvalid(maxinten_t_hand)
             maxinten_t_hand.Value = S;
@@ -1342,16 +1343,16 @@ ID_tab.Units='pixels';
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
          
          %get all the log mat files in current folder
-         logMatFileList = ListMatLogFiles( pwd );
+         logH5FileList = ListH5LogFiles( pwd );
          if ischar(f_list)
             f_list={f_list};
         end
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
-                f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
+                f_list_log = FindBatchMatLogFile(f_list, logH5FileList);
                     for ii=1:length(f_list)
-%                         try
+%                        % try
                             fname=f_list{ii};
                             fnamelog=f_list_log{ii};
                             batch=1;
@@ -1367,7 +1368,7 @@ ID_tab.Units='pixels';
                                 ROIs = [];
                             end
                             for jj=1:length(ROIs)+1
-                                try
+                               % try
                                 if jj==1
                                     disp('preliminary aligning');
                                     img_data = importimg_batch(fname,fnamelog);
@@ -1428,10 +1429,10 @@ ID_tab.Units='pixels';
                                 aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
 
                                 save(aligned_file,'-struct','tsne_data');
-                                catch excp
+                           %     catch excp
                                     
-                                    1;
-                                end
+                           %         1;
+                           %     end
                             end
                             batch = 0;
 %                         catch
@@ -1706,7 +1707,7 @@ ID_tab.Units='pixels';
             %tsne_data.aligned_red_img=aligned_red_img;
            % tsne_data.aligned_green_img=aligned_green_img;
 
-            tsne_data.odor_conc_inf=gen_odor_conc_inf(tsne_data.filenames{2});
+            %tsne_data.odor_conc_inf=gen_odor_conc_inf(tsne_data.filenames{2});
 %                 if ~isfield(tsne_data,'odor_inf')
 %                     tsne_data.odor_inf=load('odor_inf.mat');
 %                 end
@@ -1966,11 +1967,11 @@ ID_tab.Units='pixels';
                 
                 
             end
-            if isempty(fLeg) || ~isvalid(fLeg)                       
-                fLeg=legendOnly(tsne_data.odor_conc_inf,tsne_data.odor_inf);
-            end
-            fLeg.Position(1:2)=[f_tSNE.Position(1)+f_tSNE.Position(3),...
-                    f_tSNE.Position(2)+f_tSNE.Position(4)-fLeg.Position(4)];   
+            %if isempty(fLeg) || ~isvalid(fLeg)                       
+             %   fLeg=legendOnly(tsne_data.odor_conc_inf,tsne_data.odor_inf);
+            %end
+            %fLeg.Position(1:2)=[f_tSNE.Position(1)+f_tSNE.Position(3),...
+            %        f_tSNE.Position(2)+f_tSNE.Position(4)-fLeg.Position(4)];   
             if ~isvalid(reset_compare_btn)
                 reset_compare_btn=uicontrol('Parent',compare_tab,'Style','pushbutton','String','Reset',...
                     'Callback',@reset_compare);
@@ -2078,7 +2079,7 @@ ID_tab.Units='pixels';
 %             odor_inf.odor_concentration_list=tsne_data.odor_inf.odor_concentration_list;
             [~,nm_sig,nmPeakSig,...
                 s2n_mat,s2n_peak_mat,neuron_fire,neuron_fire_mat]=...
-                 calc_nm_sig(tsne_data.odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
+                 calc_nm_sig(tsne_data.odor_seq,tsne_data.cluster_signals);
 
              tsne_data.nmPeakSigMat=nmPeakSig;
              tsne_data.nmSigMat=nm_sig;
