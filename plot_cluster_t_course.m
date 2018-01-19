@@ -109,7 +109,7 @@ end
     axis equal
     ax3D=gca;
     ax3D.Position=[.01,.5,.3,.5];
-    firstOdorIdx = find(tsne_data.odor_seq,1);
+    firstOdorIdx = find(tsne_data.odor_seq.odorSeqStep,1);
     if isfield(tsne_data,'full_max_projs')
         imgProj = tsne_data.full_max_projs;
         

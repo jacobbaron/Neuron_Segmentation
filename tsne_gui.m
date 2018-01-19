@@ -1324,7 +1324,7 @@ ID_tab.Units='pixels';
         
         
     end
-    function [redAligned,greenAligned,shifts]=normcorre_rigid_align(redImg,greenImg)
+    function [redAligned,greenAligned,shifts,corr]=normcorre_rigid_align(redImg,greenImg)
         imSize = size(redImg); 
         options_rigid = NoRMCorreSetParms('d1',...
             imSize(1),'d2',imSize(2),'d3',imSize(3),...
@@ -1332,7 +1332,7 @@ ID_tab.Units='pixels';
             'NaN');
         [redAligned,shifts] = ...
               normcorre(redImg,options_rigid);
-
+        corr = motion_metrics(redAligned);
         greenAligned= apply_shifts_serial(...
             greenImg,...
             shifts,options_rigid);
@@ -1393,7 +1393,7 @@ ID_tab.Units='pixels';
                                         ROI(1):ROI(1)+ROI(3),:,:);
                                     
                                     [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
-                                        ] = normcorre_rigid_align(...
+                                        tsne_data.alignCorr] = normcorre_rigid_align(...
                                         img_dataROI.img_stacks{2},img_dataROI.img_stacks{1});
                                     
                                 end
