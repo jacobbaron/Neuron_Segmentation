@@ -2122,7 +2122,7 @@ ID_tab.Units='pixels';
             
 
             
-            [tsne_data.neuron_CoM,tsne_data.neuron_var]=calcNeuronPositions(tsne_data);
+            [tsne_data.neuron_CoM,tsne_data.neuron_var]=calcNeuronPositions(tsne_data,[],batch);
             filename = tsne_data.filenames{1};
             if ~batch
             [fig_name,pname]=uiputfile('*.fig','Enter figure 1 name',strcat(filename,'_tsne_result.fig'));

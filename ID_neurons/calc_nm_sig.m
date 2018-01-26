@@ -68,7 +68,8 @@ function [odors,nm_sig_mat,nm_peak_sig_mat,...
 %                 1;
 %             end
             neuron_fire(jj,ii)=any(sig_diff(odor_period)>1.5);
-            if numOdors(ii)==1 %only fill matrix for pure odors
+            if 0 %for now just don't do this
+                %numOdors(ii)==1 %only fill matrix for pure odors
                 odors{end+1} = [odor_seq.concs{odor_seq.seqArr(:,ii)},' ',...
                     odor_seq.odors{odor_seq.seqArr(:,ii)}];
                 inds = indsList(odor_seq.seqArr(:,ii),:);
