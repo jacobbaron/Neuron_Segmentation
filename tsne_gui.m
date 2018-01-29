@@ -310,6 +310,8 @@ avg_full_green_menu = uimenu(disp_menu,'Label','Plot full average green signal (
 batch_menu = uimenu(gcf,'Label','Batch Import');
 pre_set_ROI_menu= uimenu(batch_menu ,'Label','Pre-set ROIs','Callback',{@pre_set_ROI});
 run_batch_alignment = uimenu(batch_menu ,'Label','Run Batch Alignment','Callback',{@batch_alignment});
+batch_align_merge_menu = uimenu(batch_menu,'Label','Run Batch Alignment and Merge',...
+    'Callback',{@batch_align_merge});
 batch_ROI_foreground_menu = uimenu(batch_menu ,'Label','Select batch ROIs and Foregrounds',...
     'Callback',{@batch_ROI_foreground});
 batch_tsne_menu = uimenu(batch_menu, 'Label','Batch run t-SNE and clustering',...
@@ -616,9 +618,11 @@ ID_tab.Units='pixels';
             end
         end
     end
-    function img_data = importimg_batch(fname,fnamelog)
+    function img_data = importimg_batch(fname,fnamelog,ii)
         delete_figs;
-                    
+        if ~exist('ii','var')
+            ii = 1;
+        end
         if contains(fname,'.nd2')                     
             img_data=import_nd2_files(1,fname,fnamelog);
         elseif contains(fname,'.h5')
@@ -628,22 +632,22 @@ ID_tab.Units='pixels';
         %    ld=load(fnamelog);
         %    tsne_data.log_data=ld.log_data;
         %end
-        tsne_data=struct;
-        tsne_data.odor_inf=load('odor_inf.mat');
+        
+        tsne_data(ii).odor_inf=load('odor_inf.mat');
         erase_ID_tab;
-        tsne_data.odor_seq=img_data.odor_seq;
-        tsne_data.t=img_data.t;
+        tsne_data(ii).odor_seq=img_data.odor_seq;
+        tsne_data(ii).t=img_data.t;
          if isfield(img_data,'pixelSize')
-            tsne_data.pixelSize=img_data.pixelSize;
+            tsne_data(ii).pixelSize=img_data.pixelSize;
         end
         if isfield(img_data,'which_side')
-            tsne_data.which_side=img_data.which_side;
+            tsne_data(ii).which_side=img_data.which_side;
         end
 
         if isfield(img_data,'which_side')
             larva_side=img_data.which_side;
         end
-        tsne_data.filenames={img_data.filename,img_data.filename_log};
+        tsne_data(ii).filenames={img_data.filename,img_data.filename_log};
         movie_loaded=1;IDed=0;tsned=0;clustered=0;pca_done=0;
         undo_item.Enable='Off';
         erase_compare_tab;
@@ -1339,6 +1343,47 @@ ID_tab.Units='pixels';
         redAligned = cast(redAligned,'uint16');
         greenAligned = cast(greenAligned,'uint16');
     end
+    function batch_align_merge(varargin)
+        f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
+         
+         %get all the log mat files in current folder
+         logH5FileList = ListH5LogFiles( pwd );
+         if ischar(f_list)
+            f_list={f_list};
+        end
+         if iscell(f_list)
+                %f_list_log=dir('log_*.mat');
+                %f_list_log=uigetfile('log_*','MultiSelect','on');
+            f_list_log = FindBatchMatLogFile(f_list, logH5FileList);
+            tsne_data=struct;
+            for ii=1:length(f_list)
+                fname=f_list{ii};
+                fnamelog=f_list_log{ii};
+                batch=1;
+                
+                img_data = importimg_batch(fname,fnamelog);
+                [tsne_data(ii).aligned_red_img,tsne_data(ii).aligned_green_img,...
+                    tsne_data(ii).meanRedChan] = alignment_nr(img_data.img_stacks{2},...
+                    img_data.img_stacks{1});
+                
+                %[tsne_data(ii).aligned_red_img, tsne_data(ii).aligned_green_img] =...
+                %    remove_zeros(tsne_data(ii).aligned_red_img,tsne_data(ii).aligned_green_img);
+                
+            end
+            
+                setup_figures;
+                display_movie;
+                run_pca_batch;
+                tsne_data.full_img_size = size(tsne_data.aligned_green_img);
+                tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
+                mkdir('aligned');
+                roiNum = '';
+                aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
+
+                save(aligned_file,'-struct','tsne_data');
+                batch = 0;
+        end
+    end
     function batch_alignment(varargin)
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
          
@@ -1350,96 +1395,32 @@ ID_tab.Units='pixels';
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
-                f_list_log = FindBatchMatLogFile(f_list, logH5FileList);
-                    for ii=1:length(f_list)
-%                        % try
-                            fname=f_list{ii};
-                            fnamelog=f_list_log{ii};
-                            batch=1;
-                            tsne_data=struct;
-                            
-                            ROI_files = dir([fname,'_ROIs.mat']);
-                            if ~isempty(ROI_files)
-                                
-                                load(ROI_files(1).name);
-                                ROIs = ROI;
-                                ROI=[];
-                            else
-                                ROIs = [];
-                            end
-                            for jj=1:length(ROIs)+1
-                               % try
-                                if jj==1
-                                    disp('preliminary aligning');
-                                    img_data = importimg_batch(fname,fnamelog);
-                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
-                                        shiftsPrelim] = normcorre_rigid_align(...
-                                        img_data.img_stacks{2},img_data.img_stacks{1});
-                                    
-                                    full_green_img = tsne_data.aligned_green_img;
-                                    full_red_img = tsne_data.aligned_red_img;
-                                else
-                                    disp('secondary aligning');
-                                    ROI = round(ROIs{jj-1}); %crop initially aligned movie
-                                    ROI(1) = ROI(1)+round(shiftsPrelim(1).shifts(:,:,:,2));
-                                    ROI(2) = ROI(2)+round(shiftsPrelim(1).shifts(:,:,:,1));
-                                    ROI = keep_in_bounds(ROI,size(full_red_img));
-                                    img_dataROI = img_data;
-                                    img_dataROI.img_stacks{1} = ....
-                                        full_green_img(ROI(2):ROI(2)+ROI(4),...
-                                        ROI(1):ROI(1)+ROI(3),:,:);
-                                    img_dataROI.img_stacks{2} = ...
-                                        full_red_img(ROI(2):ROI(2)+ROI(4),...
-                                        ROI(1):ROI(1)+ROI(3),:,:);
-                                    
-                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
-                                        tsne_data.alignCorr] = normcorre_rigid_align(...
-                                        img_dataROI.img_stacks{2},img_dataROI.img_stacks{1});
-                                    
-                                end
-                                [tsne_data.aligned_red_img, tsne_data.aligned_green_img] =...
-                                    remove_zeros(tsne_data.aligned_red_img,tsne_data.aligned_green_img);
-                                setup_figures;
-                                display_movie;
-                                run_pca_batch;
-                                tsne_data.full_img_size = size(tsne_data.aligned_green_img);
-                                tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
-                                %remove border zeros from alignment
-                                
-    %%
-%                                 max_red = max(tsne_data.aligned_red_img(:))
-%                                 min_red = min(tsne_data.aligned_red_img(:))
-%                                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/...
-%                                     (max_red-min_red),'uint16');
-%                                 tsne_data.scale_factor_red = (2^16-1)/(max_red-min_red);
-%                                 tsne_data.aligned_red_img = scaled_red;
-%                                 max_green = max(tsne_data.aligned_green_img(:));
-%                                 min_green = min(tsne_data.aligned_green_img(:));
-%                                 scaled_green = cast((tsne_data.aligned_green_img-min_green)*(2^16-1)/...
-%                                     (max_green-min_green),'uint16');
-%                                 tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
-%                                 tsne_data.aligned_green_img = scaled_green;
-      %%                                                                                                              
-                                mkdir('aligned');
-                                if jj==1
-                                    roiNum='';
-                                else
-                                    roiNum=['_',num2str(jj-1)];
-                                end
-                                aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
+            f_list_log = FindBatchMatLogFile(f_list, logH5FileList);
+            for ii=1:length(f_list)
+                fname=f_list{ii};
+                fnamelog=f_list_log{ii};
+                batch=1;
+                tsne_data=struct;
+                img_data = importimg_batch(fname,fnamelog);
+                [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
+                    tsne_data.meanRedChan] = alignment_nr(img_data.img_stacks{2},...
+                    img_data.img_stacks{1});
+                
+                [tsne_data.aligned_red_img, tsne_data.aligned_green_img] =...
+                    remove_zeros(tsne_data.aligned_red_img,tsne_data.aligned_green_img);
+                setup_figures;
+                display_movie;
+                run_pca_batch;
+                tsne_data.full_img_size = size(tsne_data.aligned_green_img);
+                tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
 
-                                save(aligned_file,'-struct','tsne_data');
-                           %     catch excp
-                                    
-                           %         1;
-                           %     end
-                            end
-                            batch = 0;
-%                         catch
-%                             fprintf('Movie %s failed to load for some reason, check!\n',fname);
-%                             end
-                        
-                    end
+                mkdir('aligned');
+                roiNum = '';
+                aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
+
+                save(aligned_file,'-struct','tsne_data');
+                batch = 0;
+            end
          end
     end
     function batch_ROI_foreground(varargin)
