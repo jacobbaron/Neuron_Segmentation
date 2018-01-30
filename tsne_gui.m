@@ -711,7 +711,7 @@ ID_tab.Units='pixels';
             set(stxthand, 'String', '2D image');
         end
         
-        [odorStrs]=compute_odor_conc(tsne_data.odor_seq.odorSeqStep(S),tsne_data.odor_seq.odor_inf);
+        [odorStrs]=compute_odor_conc(tsne_data.odor_seq,S);
         
             t=tsne_data.t;
         odorStrs = [sprintf('t = %0.3f sec',t(S));odorStrs];
