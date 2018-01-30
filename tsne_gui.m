@@ -711,7 +711,7 @@ ID_tab.Units='pixels';
             set(stxthand, 'String', '2D image');
         end
         
-        [odorStrs]=compute_odor_conc(tsne_data.odor_seq,S);
+        [odorStrs]=compute_odor_conc(tsne_data.odor_seq.odorSeqStep(S),tsne_data.odor_seq.odor_inf);
         
             t=tsne_data.t;
         odorStrs = [sprintf('t = %0.3f sec',t(S));odorStrs];
@@ -1361,7 +1361,7 @@ ID_tab.Units='pixels';
                 fnamelog=f_list_log{ii};
                 batch=1;
                 
-                img_data = importimg_batch(fname,fnamelog);
+                img_data = importimg_batch(fname,fnamelog,ii);
                 [tsne_data(ii).aligned_red_img,tsne_data(ii).aligned_green_img,...
                     tsne_data(ii).meanRedChan] = alignment_nr(img_data.img_stacks{2},...
                     img_data.img_stacks{1});
@@ -1370,7 +1370,7 @@ ID_tab.Units='pixels';
                 %    remove_zeros(tsne_data(ii).aligned_red_img,tsne_data(ii).aligned_green_img);
                 
             end
-            
+                [tsne_data] = merge_multiple_movies(tsne_data);
                 setup_figures;
                 display_movie;
                 run_pca_batch;
@@ -1378,11 +1378,13 @@ ID_tab.Units='pixels';
                 tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
                 mkdir('aligned');
                 roiNum = '';
-                aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
+                aligned_file = fullfile('aligned',[fname,'_batch_aligned',roiNum,'.mat'])
 
-                save(aligned_file,'-struct','tsne_data');
+                save(aligned_file,'-struct','tsne_data','-v7.3');
                 batch = 0;
-        end
+         end
+        
+        
     end
     function batch_alignment(varargin)
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
