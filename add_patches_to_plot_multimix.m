@@ -20,9 +20,15 @@ function [patches,leg]=add_patches_to_plot_multimix(odor_seq,ax,add_legend,odor_
    % [unique_odors,unique_odor_idx]=unique(odor_conc_inf(odor_starts));
    patches = gobjects(size(odor_seq.concs));
     for ii=1:size(odor_seq.seqArr,2)
+        
         odorIdx = odor_seq.seqArr(:,ii);
+        
         odorIdxNum = find(odorIdx);
         numOdors = sum(double(odorIdx));
+        odorStrs = cellfun(@(x,y)[x,' ',y],odor_seq.concs(odorIdx),odor_seq.odors(odorIdx),...
+           'UniformOutput',false);
+       odorStrs = [num2str(numOdors),' odors';odorStrs];
+       odorTxt = sprintf('%s\n',odorStrs{:});
         %odorStrs = cellfun(@(x,y)[x,' ',y],odor_seq.concs(odorIdx),...
         %    odor_seq.odors(odorIdx),'UniformOutput',false);
         yRnges = linspace(yLims(1),yLims(2),numOdors+1);
@@ -33,7 +39,7 @@ function [patches,leg]=add_patches_to_plot_multimix(odor_seq,ax,add_legend,odor_
                 tCum(odorEndIdx(ii)),tCum(odorStartIdx(ii))];
             y = [yRnges(jj),yRnges(jj),yRnges(jj+1),yRnges(jj+1)];
             patches(odorIdxNum(jj))=patch(x,y,color_seq(jj,:),...
-                'EdgeColor','none','FaceAlpha',0.4);
+                'EdgeColor','none','FaceAlpha',0.4,'Tag',odorTxt);
             hold on;    
         end
     end

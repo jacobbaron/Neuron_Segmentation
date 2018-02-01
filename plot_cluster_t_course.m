@@ -54,14 +54,14 @@ for ii=1:length(labels2plot)
         subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio])
     end
     
-    h(ii)=plot(tdata,signals{ii},'LineWidth',3);
-    h(ii).Color=cmap(ii+1,:);
+    h(ii)=plot(tdata,signals{labels2plot(ii)-1},'LineWidth',3);
+    h(ii).Color=cmap(labels2plot(ii),:);
     ax(ii)=gca;
-    ax(ii).YLim=[min(signals{ii}) - 0.1 * max(signals{ii}),max(signals{ii}) + 0.1 * max(signals{ii})];
+    ax(ii).YLim=[min(signals{labels2plot(ii)-1}) - 0.1 * max(signals{labels2plot(ii)-1}),max(signals{labels2plot(ii)-1}) + 0.1 * max(signals{labels2plot(ii)-1})];
     xlim([0,max(tdata)]);
     if exist('tsne_data','var')
         if isfield(tsne_data,'neuron_fire')
-            add_neuron_fire_to_plot(tdata,odor_seq,gca,tsne_data.neuron_fire(ii,:));
+            add_neuron_fire_to_plot(tdata,odor_seq,gca,tsne_data.neuron_fire(labels2plot(ii),:));
         end
     end
     if ii==1
@@ -82,9 +82,9 @@ for ii=1:length(labels2plot)
     end
     if exist('tsne_data','var')
         if isfield(tsne_data,'neuronID')
-            ylab=ylabel(tsne_data.neuronID{ii},'rot',0);
+            ylab=ylabel(tsne_data.neuronID{labels2plot(ii)-1},'rot',0);
         else
-            ylab=ylabel(num2str(ii),'rot',0);
+            ylab=ylabel(num2str(labels2plot(ii)),'rot',0);
         end
     end
     ylab.VerticalAlignment='middle';

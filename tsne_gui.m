@@ -62,7 +62,7 @@ Img_yz=[];Img_xz=[];Img_xy=[];Img_yz_full=[];Img_xz_full=[];Img_xy_full=[];
 f_tSNE=figure('units','normalized','outerposition',[.05 .05 .8 .8],...
     'Name','t-SNE for Neuron Clustering','ToolBar','figure','MenuBar','none');
 
-tgroup=uitabgroup('Parent',f_tSNE);
+tgroup=uitabgroup('Parent',f_tSNE,'SelectionChangedFcn',{@tab_change});
 % foreground_tab=uitab('Parent',tgroup,'Title','Determine Foreground');
 tsne_tab=uitab('Parent',tgroup,'Title','t-SNE');
 compare_tab=uitab('Parent',tgroup,'Title','Compare Neurons');
@@ -361,7 +361,13 @@ start_manual_cluster_btn=uicontrol('Parent',tsne_tab,...
     'String','Manually cluster points',...
     'FontSize', BtnSz, ...
     'Callback' , {@manual_cluster});
-
+update_compare_btn = uicontrol('Parent',compare_tab,...
+    'Style','pushbutton',...
+    'units','normalized',...
+    'Position',[.95,.9,.05,.05],...
+    'String','Update',...
+    'FontSize',BtnSz,...
+    'Callback',{@change_include});
 plot_btn_pos=[start_manual_cluster_btn_pos(1)+start_manual_cluster_btn_pos(3)+btn_space,...
     start_manual_cluster_btn_pos(2:4)];
 plot_btn=uicontrol('Parent',tsne_tab,...
@@ -395,6 +401,8 @@ ID_tab.Units='pixels';
             'Callback',{@cancel},...
             'Visible','off');
         1;
+    f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
+    
 %set (gcf, 'ButtonDownFcn', @mouseClick);
 %set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
 %set(gcf,'WindowButtonUpFcn', @mouseRelease)
@@ -682,35 +690,56 @@ ID_tab.Units='pixels';
     end
     % -=< Slice slider callback function >=-
     function compareSlider(hObj,event)
-         t=round(hObj.Value);
-         S=t;
-         if ~isempty(event) && can_time_slide
-             shand.Value = S;
-             SliceSlider(shand,[]);
-         end
+         
+         if ~isempty(event)
+             S=round(hObj.Value);
+         else
+             %S = SliceSlider.Value;
+             hObj.Value=S;
+         end         
+%          if ~isempty(event) && can_time_slide
+%              shand.Value = S;
+%              SliceSlider(shand,[]);
+%          end
          for ii=1:length(ax_compare)
              if isvalid(tline_compare(ii))
                 delete(tline_compare(ii));
              end
              yrange=ax_compare(ii).YLim;
              y=linspace(min(yrange),max(yrange),10);
-             x=tsne_data.t(t)*ones(10,1);
+             x=tsne_data.t(S)*ones(10,1);
              tline_compare(ii)=plot(ax_compare(ii),x,y,'k');                                                 
          end
         
         %[current_odor,current_conc]=compute_odor_conc(tsne_data(1).odor_seq(t),tsne_data.odor_inf);
         [odorStrs]=compute_odor_conc(tsne_data(1).odor_seq,S);
-        odorStrs = [sprintf('t = %0.3f sec',tsne_data.t(t));odorStrs];
+        odorStrs = [sprintf('t = %0.3f sec',tsne_data.t(S));odorStrs];
         maxinten_t_text.String=sprintf('%s\n',odorStrs{:});
-        ax_xyz.Children.CData=Img_max_xyz(:,:,t);
+        ax_xyz.Children.CData=Img_max_xyz(:,:,S);
         %ax_xz.Children.CData=Img_xz(:,:,t)';
         %ax_yz.Children.CData=Img_yz(:,:,t);
         
 %         
     end
+    function tab_change(varargin)
+            1;
+            changeEvent = varargin{2};
+            if strcmp(changeEvent.NewValue.Title,'Compare Neurons')                
+               compareSlider(maxinten_t_hand,[]);
+            elseif strcmp(changeEvent.NewValue.Title,'t-SNE')
+                SliceSlider(shand,[]);
+            end
+            
+    end
     function SliceSlider (hObj,event)
-        S = round(get(hObj,'Value'));
-        img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;
+        if ~isempty(event)
+            S = round(get(hObj,'Value'));
+        else            
+            hObj.Value = S;
+        end
+       
+        tic;img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;toc
+       
         %caxis([Rmin Rmax])
         if sno > 1
             set(stxthand, 'String', sprintf('t step %d / %d',S, sno));
@@ -718,17 +747,17 @@ ID_tab.Units='pixels';
             set(stxthand, 'String', '2D image');
         end
         
-        [odorStrs]=compute_odor_conc(tsne_data(1).odor_seq,S);
+        tic;[odorStrs]=compute_odor_conc(tsne_data(1).odor_seq,S);toc;
         
             t=tsne_data.t;
         odorStrs = [sprintf('t = %0.3f sec',t(S));odorStrs];
         odor_txt.String=sprintf('%s\n',odorStrs{:});
         
-        if ~isempty(event) && isvalid(maxinten_t_hand)
-            maxinten_t_hand.Value = S;
-            compareSlider(maxinten_t_hand,[]);
-        end
-        
+%         if ~isempty(event) && isvalid(maxinten_t_hand)
+%             maxinten_t_hand.Value = S;
+%             compareSlider(maxinten_t_hand,[]);
+%         end
+%         
         
     end
     % -=< Mouse scroll wheel callback function >=-
@@ -1949,7 +1978,7 @@ ID_tab.Units='pixels';
                compare_chkbox(ii)=uicontrol('Parent',compare_tab,...
                    'Style','checkbox','Units','pixels',...
                    'Position',chkpos,...
-                   'Value',0,'Callback',{@change_include});
+                   'Value',0);
                 
                 
             end
@@ -1958,12 +1987,22 @@ ID_tab.Units='pixels';
             %end
             %fLeg.Position(1:2)=[f_tSNE.Position(1)+f_tSNE.Position(3),...
             %        f_tSNE.Position(2)+f_tSNE.Position(4)-fLeg.Position(4)];   
-            if ~isvalid(reset_compare_btn)
+            update_compare_btn = uicontrol('Parent',compare_tab,...
+                'Style','pushbutton',...
+                'units','normalized',...
+                'Position',[.95,.9,.05,.05],...
+                'String','Update',...
+                'FontSize',BtnSz,...
+                'Callback',{@change_include});
+            %if ~isvalid(reset_compare_btn)
                 reset_compare_btn=uicontrol('Parent',compare_tab,'Style','pushbutton','String','Reset',...
                     'Callback',@reset_compare);
-                reset_compare_btn.Position(1:2)=[ax_compare(1).Position(1)-60,...
-                    ax_compare(1).Position(2)+ax_compare(1).Position(4)+20];
-            end  
+                reset_compare_btn.Units = 'normalized';
+                reset_compare_btn.Position=[update_compare_btn.Position(1),...
+                    update_compare_btn.Position(2)-update_compare_btn.Position(4)*1.1,...
+                    update_compare_btn.Position(3:4)];
+
+            %end  
             change_include;
     end
 
@@ -1972,6 +2011,7 @@ ID_tab.Units='pixels';
             compare_chkbox(ii).Value=0;
         end
         change_include;
+        
     end
 
     function change_include(varargin)
@@ -1997,24 +2037,7 @@ ID_tab.Units='pixels';
                 size(Img_full,2)+size(Img_full,3)+1,size(Img_full,4));
             Img_max_xyz(1:size(Img_full,1),1:size(Img_full,2),:)= Img_xy;
             Img_max_xyz(size(Img_full,1)+2:end, 1:size(Img_full,2),:) = permute(Img_xz,[2 1 3]);
-            Img_max_xyz(1:size(Img_full,1), size(Img_full,2)+2:end,:) = Img_yz;
-%             pnts2include_mat_yz=repmat(pnts2include_yz,1,1,size(Img_yz,3));
-%             pnts2include_xz=any(pnts2include,1);
-%             pnts2include_mat_xz=repmat(pnts2include_xz,1,1,size(Img_yz,3));
-%             pnts2include_xy=any(pnts2include,3);
-%             pnts2include_mat_xy=repmat(pnts2include_xy,1,1,size(Img_yz,3));;
-            
-            %tic
-            %compared_img2disp(~pnts2include_mat)=0;   
-            %toc
-            
-%             Img_yz=Img_yz_full;
-%             Img_yz(~pnts2include_mat_yz)=0;
-%             Img_xz=Img_xz_full;
-%             Img_xz(~pnts2include_mat_xz)=0;
-%             Img_xy=Img_xy_full;
-%             Img_xy(~pnts2include_mat_xy)=0;
-            
+
             foreground_img(~pnts2include)=0;
             
             for ii=1:length(ax_compare)
@@ -2051,7 +2074,7 @@ ID_tab.Units='pixels';
        	%maxinten_t_hand.Callback={@compareSlider};
         
         plot_tsne_clusters;
-        
+        f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
     end
     function update_cluster_signals(varargin)
         if clustered
@@ -2080,11 +2103,12 @@ ID_tab.Units='pixels';
             try
                close(tcourse_fig); 
             end
-            if ~any([compare_chkbox(:).Value])                            
+            
+            if ~any([compare_chkbox(1:length(tsne_data.cluster_signals)).Value])                            
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);         
             else
                 [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data,...
-                    'labels2plot',find([compare_chkbox(:).Value]));         
+                    'labels2plot',find([compare_chkbox(1:length(tsne_data.cluster_signals)).Value]));         
             end
             
             
@@ -2273,7 +2297,32 @@ ID_tab.Units='pixels';
          
          
     end
-
+    function MouseMotion(varargin)
+        1;
+        show=0;
+        if strcmp(tgroup.SelectedTab.Title,'Compare Neurons')
+            obj=hittest(gcf);
+            if ischar(obj.Type)
+                if strcmp(obj.Type,'patch')
+                    1;
+                    ax= gca;
+                    
+                    C = get(gca,'CurrentPoint');
+                    pt = C(1,1:2);
+                    show=1;
+                    xoffset = ax.XLim(2)*.025;
+                    yoffset = ax.YLim(2);
+                    delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
+                    text(pt(1)+xoffset,pt(2)+yoffset,strtrim(obj.Tag),'backgroundcolor',[1 1 .8],'tag','mytooltip','edgecolor',[0 0 0],...
+        'hittest','off');
+                end
+            end
+            
+        end
+        if ~show
+            delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
+        end
+    end
 %% classifier functions
     function idNeurons(varargin)
         nmPeakSigTestMat=[];
