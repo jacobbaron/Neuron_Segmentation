@@ -2080,9 +2080,13 @@ ID_tab.Units='pixels';
             try
                close(tcourse_fig); 
             end
-            
-            
+            if ~any([compare_chkbox(:).Value])                            
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);         
+            else
+                [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data,...
+                    'labels2plot',find([compare_chkbox(:).Value]));         
+            end
+            
             
 %              [~,name]=fileparts(filename);
 %              name=strrep(name,'_',' ');

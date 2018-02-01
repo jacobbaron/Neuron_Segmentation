@@ -16,7 +16,11 @@ if isstruct(varargin{1}) %use tsne_data to plot
     else
         signals=varargin{1}.nm_signals;
     end
-    labels2plot=unique(labels(labels>1));
+    if any(strcmp(varargin,'labels2plot'))
+        labels2plot = varargin{find(strcmp(varargin,'labels2plot'))+1}+1;
+    else
+        labels2plot=unique(labels(labels>1));
+    end
     if nargin==2
         tabbed=1;
         axID=varargin{2};
