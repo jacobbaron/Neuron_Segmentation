@@ -99,12 +99,13 @@ end
         full_labels = recreate_full_img(labels,label_bkd,tsne_data.full_img_size(1:3),tsne_data.roi);
         full_red_img = recreate_full_img(tsne_data.aligned_red_img,...
             tsne_data.cropped_red_img,tsne_data.full_img_size,tsne_data.roi);
-        red_img_proj = make_max_proj_img(full_red_img,tsne_data.pixelSize);
+        
     else
         full_labels = labels;
         full_red_img = red_img;
+        
     end
-    
+    red_img_proj = make_max_proj_img(full_red_img,tsne_data.pixelSize);
     plot_3d_stuff(full_labels,labels2plot,red_img_proj,cmap(labels2plot,:),size(full_red_img),tsne_data.pixelSize);
     axis equal
     ax3D=gca;
@@ -134,11 +135,15 @@ end
             imgProj = cat(3,zeros(size(nmMaxProj)),nmMaxProjScaled,zeros(size(nmMaxProj)));
         end      
     else
-        nmMaxProj = make_max_proj_img(tsne_data.aligned_green_img(:,:,:,1:firstOdorIdx),tsne_data.pixelSize);
+        nmMaxProj = make_max_proj_img(tsne_data.aligned_green_img(:,:,:,1:firstOdorIdx),tsne_data.pixelSize);        
         maxProj = max(nmMaxProj(:));
         minProj = min(nmMaxProj(nmMaxProj>0));
-        nmMaxProjScaled = (nmMaxProj-minProj)/(maxProj-minProj);
-        
+        nmMaxProjScaledGr = (nmMaxProj-minProj)/(maxProj-minProj);
+        nmMaxProj = make_max_proj_img(tsne_data.aligned_red_img(:,:,:,1:firstOdorIdx),tsne_data.pixelSize);        
+        maxProj = max(nmMaxProj(:));
+        minProj = min(nmMaxProj(nmMaxProj>0));
+        nmMaxProjScaledRd = (nmMaxProj-minProj)/(maxProj-minProj);
+        imgProj = cat(3,nmMaxProjScaledRd,nmMaxProjScaledGr,zeros(size(nmMaxProj)));
         
      end   
         subplot(2,ratio,ratio+1)

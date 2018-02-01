@@ -23,9 +23,14 @@ options_r = NoRMCorreSetParms('d1',d1,'d2',d2,'d3',d3,'bin_width',50,'max_shift'
 % end
 %% apply nonrigid shifts to each z-plane individually
 [d1,d2,d3,T] = size(Y);
+gSizes = [126,64,32];
+overlaps = [16,16,8];
+maxShifts= [20,10,5];
+template2 = template1;
+for jj=1:length(gSizes)
 options_nr = NoRMCorreSetParms('d1',d1,'d2',d2,'bin_width',50, ...
-        'grid_size',[64,64],'us_fac',10,'max_dev',[8,8], ...
-        'overlap_pre',[16,16],'overlap_post',[16,16],'max_shift',15,'plot_flag',true,...
+        'grid_size',[gSizes(jj),gSizes(jj)],'us_fac',10,'max_dev',[4,4], ...
+        'overlap_pre',[overlaps(jj),overlaps(jj)],'overlap_post',[overlaps(jj),overlaps(jj)],'max_shift',maxShifts(jj),'plot_flag',true,...
         'correct_bidir',false);
 
 errz = {};
@@ -34,7 +39,7 @@ errz = {};
 %M2 = M1;
 %redImgAlignedNR = redImgAligned;
 %greenImgAlignedNR = greenImgAligned;
-template2 = template1;
+
 for ii = 1:d3
     try
         tic; [tmp,shiftsNR,template2(:,:,ii)] = normcorre_batch(squeeze(...
@@ -49,6 +54,6 @@ for ii = 1:d3
         fprintf('%s In %s',ME.message, ME.stack(1).name);
     end
 end
-
-
+template1 = template2;
+end
 

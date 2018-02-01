@@ -34,17 +34,26 @@ for jj=1:iter
     meanImgs = M1;
 end
 %% now merge other parts of data file
-tsne_data.aligned_red_img = cell2mat(permute({movs(:).aligned_red_img},[1,3,4,2]));
-tsne_data.aligned_green_img = cell2mat(permute({movs(:).aligned_green_img},[1,3,4,2]));
+tsne_data.aligned_red_img = cast(cell2mat(permute({movs(:).aligned_red_img},[1,3,4,2])),'uint16');
+tsne_data.aligned_green_img = cast(cell2mat(permute({movs(:).aligned_green_img},[1,3,4,2])),'uint16');
 tsne_data.meanRedChan = mean(meanImgs,4);
-tsne_data.filenames = {movs(:).filenames};
-tsne_data.odor_inf = movs(1).odor_inf;
-tsne_data.t = cell2mat({movs(:).t}');
+tsne_data.fnameSource = {movs(:).filenames};
+flist = vertcat(tsne_data.fnameSource{:});
+fnames = cellfun(@filepartName,flist(:,1),'UniformOutput',false);
+fnameBase = cellfun(@(x)x(1:strfind(x,'_run')-1),fnames,'UniformOutput',false);
+fnameBase = fnameBase{1};
+runNums = join(cellfun(@(x)x(strfind(x,'_run')+4:end),fnames,'UniformOutput',false),'_');
+runNums = runNums{1};
+tsne_data.filenames = {[fnameBase,'_run',runNums],tsne_data.fnameSource{1}{2}};
+tsne_data.odor_inf = movs(1).odor_inf; 
+
 tsne_data.pixelSize = movs(1).pixelSize;
 
 tsne_data.odor_seq = movs(1).odor_seq;
+
+tsne_data.t = movs(1).t;
 for ii=2:length(movs)
-    
+    tsne_data.t = [tsne_data.t; (movs(ii).t+tsne_data.t(end))];
     
     %because water is first and last. this will enforce order 'water, odor,
     %water, odor,... odor, water' for entire merged movie.
@@ -58,3 +67,7 @@ for ii=2:length(movs)
     
 end
 1;
+end
+function name = filepartName(path)
+[~,name] = fileparts(path);
+end
