@@ -29,7 +29,7 @@ function logFileName = FindSingleH5LogFile(movieFileName, logH5FileList)
         	disp(['Select log file for movie: ', movieFileName]);
         end
         
-        logFileName = uigetfile('log_*.h5', ['Select log file for movie: ', movieFileName]);
+        logFileName = uigetfile('log_*.h5l', ['Select log file for movie: ', movieFileName]);
     else
         logFileName = pairLogFileNameTemp{1};
     end
