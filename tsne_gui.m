@@ -1351,95 +1351,39 @@ ID_tab.Units='pixels';
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
                 f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
                     for ii=1:length(f_list)
-%                         try
                             fname=f_list{ii};
                             fnamelog=f_list_log{ii};
                             batch=1;
                             tsne_data=struct;
+                            img_data = importimg_batch(fname,fnamelog);
                             
-                            ROI_files = dir([fname,'_ROIs.mat']);
-                            if ~isempty(ROI_files)
-                                
-                                load(ROI_files(1).name);
-                                ROIs = ROI;
-                                ROI=[];
-                            else
-                                ROIs = [];
-                            end
-                            for jj=1:length(ROIs)+1
-                                try
-                                if jj==1
-                                    disp('preliminary aligning');
-                                    img_data = importimg_batch(fname,fnamelog);
-                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
-                                        shiftsPrelim] = normcorre_rigid_align(...
-                                        img_data.img_stacks{2},img_data.img_stacks{1});
-                                    
-                                    full_green_img = tsne_data.aligned_green_img;
-                                    full_red_img = tsne_data.aligned_red_img;
-                                else
-                                    disp('secondary aligning');
-                                    ROI = round(ROIs{jj-1}); %crop initially aligned movie
-                                    ROI(1) = ROI(1)+round(shiftsPrelim(1).shifts(:,:,:,2));
-                                    ROI(2) = ROI(2)+round(shiftsPrelim(1).shifts(:,:,:,1));
-                                    ROI = keep_in_bounds(ROI,size(full_red_img));
-                                    img_dataROI = img_data;
-                                    img_dataROI.img_stacks{1} = ....
-                                        full_green_img(ROI(2):ROI(2)+ROI(4),...
-                                        ROI(1):ROI(1)+ROI(3),:,:);
-                                    img_dataROI.img_stacks{2} = ...
-                                        full_red_img(ROI(2):ROI(2)+ROI(4),...
-                                        ROI(1):ROI(1)+ROI(3),:,:);
-                                    
-                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img,...
-                                        ] = normcorre_rigid_align(...
-                                        img_dataROI.img_stacks{2},img_dataROI.img_stacks{1});
-                                    
+                            imgSize = size(img_data.img_stacks{1});
+                            xIdx = [{1:round(imgSize(2)/2)};{round(imgSize(2)/2):imgSize(2)}];
+                            side = {'left','right'};
+                            for jj=1:2
+                                if ~isfield(img_data,'aligned_green_img')
+                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img] = ...
+                                        alignment_nr(img_data.img_stacks{2}(:,xIdx{jj},:,:),...
+                                        img_data.img_stacks{1}(:,xIdx{jj},:,:),3,1);
                                 end
-                                [tsne_data.aligned_red_img, tsne_data.aligned_green_img] =...
-                                    remove_zeros(tsne_data.aligned_red_img,tsne_data.aligned_green_img);
-                                setup_figures;
-                                display_movie;
-                                run_pca_batch;
-                                tsne_data.full_img_size = size(tsne_data.aligned_green_img);
-                                tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
-                                %remove border zeros from alignment
-                                
-    %%
-%                                 max_red = max(tsne_data.aligned_red_img(:))
-%                                 min_red = min(tsne_data.aligned_red_img(:))
-%                                 scaled_red = cast((tsne_data.aligned_red_img-min_red)*(2^16-1)/...
-%                                     (max_red-min_red),'uint16');
-%                                 tsne_data.scale_factor_red = (2^16-1)/(max_red-min_red);
-%                                 tsne_data.aligned_red_img = scaled_red;
-%                                 max_green = max(tsne_data.aligned_green_img(:));
-%                                 min_green = min(tsne_data.aligned_green_img(:));
-%                                 scaled_green = cast((tsne_data.aligned_green_img-min_green)*(2^16-1)/...
-%                                     (max_green-min_green),'uint16');
-%                                 tsne_data.scale_factor_green = (2^16-1)/(max_green-min_green);
-%                                 tsne_data.aligned_green_img = scaled_green;
-      %%                                                                                                              
-                                mkdir('aligned');
-                                if jj==1
-                                    roiNum='';
-                                else
-                                    roiNum=['_',num2str(jj-1)];
-                                end
-                                aligned_file = fullfile('aligned',[fname,'_aligned',roiNum,'.mat'])
+                                    setup_figures;
+                                    display_movie;
+                                    run_pca_batch;
+                                    tsne_data.full_img_size = size(tsne_data.aligned_green_img);
+                                    tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
+                                    
+                                    mkdir('aligned');
+                                    aligned_file = fullfile('aligned',[fname,'_',side{ii},'_aligned','.mat'])
 
-                                save(aligned_file,'-struct','tsne_data');
-                                catch excp
-                                    
-                                    1;
-                                end
+                                    save(aligned_file,'-struct','tsne_data');
                             end
+                    end
                             batch = 0;
 %                         catch
 %                             fprintf('Movie %s failed to load for some reason, check!\n',fname);
 %                             end
                         
-                    end
-         end
+        end
     end
     function batch_ROI_foreground(varargin)
         f_list_glob = uigetfile('.\aligned\*_aligned*.mat','MultiSelect','on');  
@@ -1459,6 +1403,8 @@ ID_tab.Units='pixels';
     function increment_ii_glob(varargin)
         if ii_glob<=ii_glob_max
             fnamez = fullfile('.\aligned\',f_list_glob{ii_glob});
+            tMat = matfile(fnamez);
+            deets= whos(tMat);
             tsne_data=load(fnamez,'mean_green_img_t','dist','filenames','which_side');                
             mean_green_img_t = tsne_data.mean_green_img_t;
             dist=tsne_data.dist;
@@ -1498,8 +1444,7 @@ ID_tab.Units='pixels';
                 end
                 if ~isempty(fullAlignName)
                    full_img = load(fullAlignName,'aligned_green_img','aligned_red_img');
-                   tsne_data.full_max_projs = make_max_img_RGB(full_img.aligned_red_img,...
-                       full_img.aligned_green_img, tsne_data.pixelSize);
+                   
                     
                 end
                 
@@ -1527,12 +1472,13 @@ ID_tab.Units='pixels';
             
             
             
-            
+            tsne_data.full_max_projs = make_max_img_RGB(tsne_data.aligned_red_img,...
+                       tsne_data.aligned_green_img, tsne_data.pixelSize);
             aligned_green_img_full = tsne_data.aligned_green_img;
             aligned_red_img_full = tsne_data.aligned_red_img;
             foreground = tsne_data.foreground;
             foreground_img = foreground;
-            crop_green_img;
+            %crop_green_img;
             Z = round(size(tsne_data.aligned_green_img,3)/2);
             S=1;
             display_movie;
@@ -1897,7 +1843,7 @@ ID_tab.Units='pixels';
                     tsne_result_full(tsne_data.labels(tsne_data.labels>0)==unique_clusters(ii),2)],...
                     'rows');
                 
-                h(ii)=scatter(tsne_ax,tsne_label_pts(:,1),tsne_label_pts(:,2),'.');
+                h(ii)=scatter(tsne_ax,tsne_label_pts(:,1),tsne_label_pts(:,2),.1,'.');
                 hold(tsne_ax, 'on');
                 if unique_clusters(ii)==1
                     h(ii).MarkerEdgeColor=tsne_data.cmap(1,:);
@@ -2076,6 +2022,9 @@ ID_tab.Units='pixels';
             tsne_data=calculate_cluster_signals(tsne_data,tsne_data.aligned_green_img,tsne_data.odor_seq);
 %             odor_inf.odor_list=tsne_data.odor_inf.odor_list;
 %             odor_inf.odor_concentration_list=tsne_data.odor_inf.odor_concentration_list;
+            if ~isfield(tsne_data,'odor_inf')
+                tsne_data.odor_inf = load('odor_inf.mat');
+            end
             [~,nm_sig,nmPeakSig,...
                 s2n_mat,s2n_peak_mat,neuron_fire,neuron_fire_mat]=...
                  calc_nm_sig(tsne_data.odor_seq,tsne_data.cluster_signals,tsne_data.odor_inf);
@@ -2093,13 +2042,15 @@ ID_tab.Units='pixels';
             try
                close(tcourse_fig); 
             end
-            
-            
+            if ~isfield(tsne_data,'full_max_projs')
+                tsne_data.full_max_projs = make_max_img_RGB(tsne_data.aligned_red_img,...
+                           tsne_data.aligned_green_img, tsne_data.pixelSize);
+            end
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);         
             
-             [~,name]=fileparts(filename);
-             name=strrep(name,'_',' ');
-             assignin('base','tsne_data','tsne_data');
+%              [~,name]=fileparts(filename);
+%              name=strrep(name,'_',' ');
+%              assignin('base','tsne_data','tsne_data');
 %              [~,~,fire,peak_sig_fig]=dispNeuronSignals(nmPeakSig,...
 %                 tsne_data.odor_inf,neuron_fire_mat,name,tsne_data.neuronID);
        
