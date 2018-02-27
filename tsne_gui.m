@@ -1373,9 +1373,9 @@ ID_tab.Units='pixels';
                                     tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
                                     
                                     mkdir('aligned');
-                                    aligned_file = fullfile('aligned',[fname,'_',side{ii},'_aligned','.mat'])
+                                    aligned_file = fullfile('aligned',[fname,'_',side{jj},'_aligned','.mat'])
 
-                                    save(aligned_file,'-struct','tsne_data');
+                                    save(aligned_file,'-struct','tsne_data','-v7.3','-nocompression');
                             end
                     end
                             batch = 0;
@@ -2112,7 +2112,7 @@ ID_tab.Units='pixels';
 %                 %tsne_data.scale_factor_cropped = (2^16-1)/(max_cropped-min_cropped);
 %                 tsne_data.cropped_img = cast((tsne_data.cropped_img-min_green)*...
 %                     tsne_data.scale_factor_green,'uint16');
-                save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data');
+                save(strcat(filename,'_tsne_data.mat'),'-struct','tsne_data','-v7.3','-nocompression');
                 saved=1;
 %                 tsne_data.aligned_green_img = cast(tsne_data.aligned_green_img,'double')/...
 %                     tsne_data.scale_factor_green;
@@ -2169,7 +2169,7 @@ ID_tab.Units='pixels';
            bkgd_ROI_saving = 'off';
             save(prepared_file,'-struct','tsne_data',...
                 'dist','background','background_err','foreground','roi',...
-                'use_space','-append');
+                'use_space','-append','-v7.3','-nocompression');
             %restore button;
            save_export_btn.String = 'Save to file...'; 
            if strcmp(more_roi,'Yes')     
