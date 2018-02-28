@@ -37,7 +37,7 @@ end
         
 num_clusters=length(unique(labels(labels>1)));
 
-cmap=generate_cmap(num_clusters);
+cmap=generate_cmap(length(labels2plot));
 if ~tabbed
     f=figure('units','normalized','outerposition',[0 0 1 1]);
 else
@@ -55,7 +55,7 @@ for ii=1:length(labels2plot)
     end
     
     h(ii)=plot(tdata,signals{labels2plot(ii)-1},'LineWidth',3);
-    h(ii).Color=cmap(labels2plot(ii),:);
+    h(ii).Color=cmap(ii+1,:);
     ax(ii)=gca;
     ax(ii).YLim=[min(signals{labels2plot(ii)-1}) - 0.1 * max(signals{labels2plot(ii)-1}),max(signals{labels2plot(ii)-1}) + 0.1 * max(signals{labels2plot(ii)-1})];
     xlim([0,max(tdata)]);
@@ -110,7 +110,7 @@ end
         
     end
     red_img_proj = make_max_proj_img(full_red_img,tsne_data.pixelSize);
-    plot_3d_stuff(full_labels,labels2plot,red_img_proj,cmap(labels2plot,:),size(full_red_img),tsne_data.pixelSize);
+    plot_3d_stuff(full_labels,labels2plot,red_img_proj,cmap(2:end,:),size(full_red_img),tsne_data.pixelSize);
     axis equal
     ax3D=gca;
     ax3D.Position=[.01,.5,.3,.5];
