@@ -11,7 +11,7 @@ if ~exist('numIterNR','var')
     numIterNR = 3;
 end
 %% do high pass filter of red channel
-Y = zeros(size(redImg));
+Y = zeros(size(redImg),'single');
 parfor t = 1:T
     filt1 = medfilt3(redImg(:,:,:,t));
     Y(:,:,:,t)  = filt1-imgaussfilt3(filt1,[3,3,2]);

@@ -35,6 +35,7 @@ for ii=1:length(tsne_data.cluster_signals)
                     mWidth,...
                     mHeight];
     ax(ii).YLabel.Visible='off';
+   
     neuronIDnum(ii)=find(strcmp(orns,neuronID(ii)));
     ORNlistii=orns;
     ORNlistii{neuronIDnum(ii)}=sprintf('<HTML><BODY bgcolor="#d3d3d3">%s</BODY>',...
