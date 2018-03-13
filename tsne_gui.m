@@ -1349,41 +1349,50 @@ ID_tab.Units='pixels';
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
-                f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
-                    for ii=1:length(f_list)
-                            fname=f_list{ii};
-                            fnamelog=f_list_log{ii};
-                            batch=1;
-                            tsne_data=struct;
-                            img_data = importimg_batch(fname,fnamelog);
-                            
-                            imgSize = size(img_data.img_stacks{1});
-                            xIdx = [{1:round(imgSize(2)/2)};{round(imgSize(2)/2):imgSize(2)}];
-                            side = {'left','right'};
-                            for jj=1:2
-                                if ~isfield(img_data,'aligned_green_img')
-                                    [tsne_data.aligned_red_img,tsne_data.aligned_green_img] = ...
-                                        alignment_nr(img_data.img_stacks{2}(:,xIdx{jj},:,:),...
-                                        img_data.img_stacks{1}(:,xIdx{jj},:,:),3,1);
-                                end
-                                    setup_figures;
-                                    display_movie;
-                                    run_pca_batch;
-                                    tsne_data.full_img_size = size(tsne_data.aligned_green_img);
-                                    tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
-                                    
-                                    mkdir('aligned');
-                                    aligned_file = fullfile('aligned',[fname,'_',side{jj},'_aligned','.mat'])
+            f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
+            for ii=1:length(f_list)
+                    fname=f_list{ii};
+                    fnamelog=f_list_log{ii};
+                    batch=1;
+                    tsne_data=struct;
+                    img_data = importimg_batch(fname,fnamelog);
 
-                                    save(aligned_file,'-struct','tsne_data','-v7.3','-nocompression');
-                            end
+                    imgSize = size(img_data.img_stacks{1});
+                    xIdx = [{1:round(imgSize(2)/2)};{round(imgSize(2)/2):imgSize(2)}];
+                    side = {'left','right'};
+                    for jj=1:2
+                        try
+                        if ~isfield(img_data,'aligned_green_img')
+                            [tsne_data.aligned_red_img,tsne_data.aligned_green_img] = ...
+                                alignment_nr(img_data.img_stacks{2}(:,xIdx{jj},:,:),...
+                                img_data.img_stacks{1}(:,xIdx{jj},:,:),3,1);
+                            tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'uint16');
+                            tsne_data.aligned_red_img = cast(tsne_data.aligned_red_img,'uint16');
+                        end
+                            setup_figures;
+                            display_movie;
+                            run_pca_batch;
+                            tsne_data.full_img_size = size(tsne_data.aligned_green_img);
+                            tsne_data.mean_green_img_t = mean(tsne_data.aligned_green_img,4);
+
+                            mkdir('aligned');
+                            aligned_file = fullfile('aligned',[fname,'_',side{jj},'_aligned','.mat']);
+
+                            save(aligned_file,'-struct','tsne_data','-v7.3','-nocompression');
+                            fprintf('aligned file = %s',aligned_file);
+                        catch err
+                            msgStr = cellfun(@(x,y)[x,', on line ',num2str(y)],{err.stack.name}',{err.stack.line}','UniformOutput',false);
+                            msg = strtrim(sprintf('%s\n',msgStr{:}));
+                            send_mail_message([],sprintf('Error in run %d',fname),sprintf('%s\n%s',err.message,msg));
+                        end    
                     end
+                end
+            end
                             batch = 0;
 %                         catch
 %                             fprintf('Movie %s failed to load for some reason, check!\n',fname);
 %                             end
                         
-        end
     end
     function batch_ROI_foreground(varargin)
         f_list_glob = uigetfile('.\aligned\*_aligned*.mat','MultiSelect','on');  
