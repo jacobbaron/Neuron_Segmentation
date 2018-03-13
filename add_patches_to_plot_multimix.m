@@ -54,7 +54,8 @@ function [patches,leg]=add_patches_to_plot_multimix(odor_seq,ax,add_legend,odor_
      elseif add_legend==-1
         [leg,BLicons]=legend(patches(odorsUsed),odorStrs(odorsUsed),...
         'Location','northeastoutside');
-        PatchInLegend = findobj(BLicons, 'type', 'patch');
-        set(PatchInLegend, 'facea', 0.4)
+        %PatchInLegend = findobj(BLicons, 'type', 'patch');
+        %set(PatchInLegend, 'facea', 0.4)
         leg.Visible='off';
      end
+     ax.YLim = yLims;

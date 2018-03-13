@@ -47,11 +47,13 @@ end
     im=surf([1 size(red_img_avg,2)],[1 size(red_img_avg,1)],ones(2)*maxZ+1,max(red_img_avg,[],3),'facecolor','texture');
     axis equal;
     x=linspace(0,1,100)';
-    colormap([1./(exp(-(x-.4)/.15)+1),linspace(0,0,100)',linspace(0,0,100)'])
-    im.CDataMapping='direct';
-    min_cdata=min(im.CData(red_img_max(:,:,end)>0));
-    max_cdata=max(im.CData(:));
-    im.CData=(im.CData-min_cdata)*150/max_cdata;
+    %colormap([1./(exp(-(x-.4)/.15)+1),linspace(0,0,100)',linspace(0,0,100)']);
+    colormap([linspace(0,1,100)',linspace(0,0,100)',linspace(0,0,100)'])
+%     im.CDataMapping='direct';
+%     min_cdata=min(im.CData(red_img_max(:,:,end)>0));
+%     max_cdata=max(im.CData(:));
+%     oldCdata = im.CData;
+%     im.CData=(oldCdata-min_cdata)*100/max_cdata;
     alpha(im,.8);
     hold off;
 %     figure

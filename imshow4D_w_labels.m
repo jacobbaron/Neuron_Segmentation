@@ -1,4 +1,4 @@
-function  imshow4D_w_labels( Img4D, labels, cmap, disprange )
+function  imshow4D_w_labels( Img4D, labels, cmap, disprange, ftpTot)
 %IMSHOW3D displays 3D grayscale images in slice by slice fashion with mouse
 %based slice browsing and window and level adjustment control.
 %
@@ -135,10 +135,10 @@ else
     [Rmin Rmax] = WL2R(Win, LevV);
 end
 cmap1=colormap(gray);
-imin=min(Img4D(:));
-imax=max(Img4D(:));
+imin=Rmin;
+imax=Rmax;
 C1=(Img4D-imin)*length(cmap1)/imax;
-
+C1(C1>length(cmap1)) = length(cmap1);
 ax=axes('position',[0,0.2,1,0.8]);
 img=imshow(Img4D(:,:,Z,S), [Rmin Rmax]);
 hold on;
@@ -147,15 +147,15 @@ img.CDataMapping='direct';
 img.CData=C1(:,:,Z,S);
 
 cmap_full=[cmap1;cmap];
-colormap(ax,cmap_full)
 
-lb=imshow(labels(:,:,Z), [Rmin Rmax]);
+img.CData = img.CData*length(cmap1)/max(img.CData(:));
+lb=imshow(labels(:,:,Z), [1 max(labels(:))]);
 lb.CDataMapping='direct';
 lb.CData=labels(:,:,Z)+length(cmap1)+1;
-
-lb.AlphaData=.2;
+alphaMap = double(labels>0)*.4.*ftpTot;
+lb.AlphaData=alphaMap(:,:,Z);
 %colormap(lb,cmap);
-
+colormap(ax,cmap_full)
 
 FigPos = get(gcf,'Position');
 S_Pos = [50 45 uint16(FigPos(3)-100)+1 20];
@@ -197,7 +197,7 @@ set (gcf, 'ButtonDownFcn', @mouseClick);
 set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
 set(gcf,'WindowButtonUpFcn', @mouseRelease)
 set(gcf,'ResizeFcn', @figureResized)
-
+set(gcf,'WindowButtonMotionFcn',{@MouseMotion})
 
 % -=< Figure resize callback function >=-
     function figureResized(object, eventdata)
@@ -264,11 +264,13 @@ set(gcf,'ResizeFcn', @figureResized)
          end
         img.CData=C1(:,:,Z,S);
         lb.CData=labels(:,:,Z)+length(cmap1)+1;
+        lb.AlphaData=alphaMap(:,:,Z);
     end
 
 % -=< Mouse button released callback function >=-
     function mouseRelease (object,eventdata)
         set(gcf, 'WindowButtonMotionFcn', '')
+        set(gcf,'WindowButtonMotionFcn',{@MouseMotion})
     end
 
 % -=< Mouse click callback function >=-
@@ -278,6 +280,7 @@ set(gcf,'ResizeFcn', @figureResized)
             InitialCoord = get(0,'PointerLocation');
             set(gcf, 'WindowButtonMotionFcn', @WinLevAdj);
         end
+        
     end
 
 % -=< Window and level mouse adjustment >=-
@@ -329,6 +332,36 @@ set(gcf,'ResizeFcn', @figureResized)
         set(lvalhand, 'String', sprintf('%6.0f',LevV));
         set(wvalhand, 'String', sprintf('%6.0f',Win));
     end
+
+
+
+
+  function MouseMotion(varargin)
+        1;
+        show=0;
+        obj=hittest(gcf);
+        if ischar(obj.Type)
+            C = get(gca,'CurrentPoint');
+            pt = round(C(1,1:2));
+           [d1,d2,~] = size(labels);
+           if (pt(2)<=d1 && pt(2)>0) && (pt(1)<=d2 && pt(1)>0)
+            neuronNum = labels(pt(2),pt(1),Z);
+                if neuronNum>0
+                    1;                   
+                    show=1;
+                    xoffset = diff(ax.XLim)*.025;
+                    yoffset = diff(ax.YLim)*.025;
+                    delete(findobj(gcf,'tag','mytooltip')); %delete last tool tip
+
+                    text(pt(1)+xoffset,pt(2)+yoffset,sprintf('neuron %d',neuronNum),'backgroundcolor',[1 1 .8],'tag','mytooltip','edgecolor',[0 0 0],...
+        'hittest','off');
+                end
+           end
+        end
+        if ~show
+            delete(findobj(gca,'tag','mytooltip')); %delete last tool tip
+        end
+  end
 
 end
 % -=< Maysam Shahedi (mshahedi@gmail.com), April 19, 2013>=-
