@@ -632,6 +632,7 @@ ID_tab.Units='pixels';
         tsne_data.odor_inf=load('odor_inf.mat');
         erase_ID_tab;
         tsne_data.odor_seq=img_data.odor_seq;
+        tsne_data.odor_conc_inf = img_data.odor_conc_inf;
         tsne_data.t=img_data.t;
          if isfield(img_data,'pixelSize')
             tsne_data.pixelSize=img_data.pixelSize;
