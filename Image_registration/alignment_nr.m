@@ -1,4 +1,4 @@
-function [redImg,greenImg,template2,errz] = alignment_nr(redImg,greenImg,numIterR,numIterNR)
+function [Y,greenImg,template2,errz] = alignment_nr(redImg,greenImg,numIterR,numIterNR)
 [d1,d2,d3, T] = size(redImg);
 % Tend = cumsum(imgSizes(4,:));
 % Tstart = [1,Tend(1:end-1)+1];
@@ -25,7 +25,7 @@ options_r = NoRMCorreSetParms('d1',size(Y,1),'d2',size(Y,2),'d3',size(Y,3),'bin_
 
     tic; [Y,shiftsR,template1] = normcorre_batch(Y,options_r); toc % register filtered data
 
-    redImg = apply_shifts(redImg,shiftsR,options_r);
+    %redImg = apply_shifts(redImg,shiftsR,options_r);
     greenImg = apply_shifts(greenImg,shiftsR,options_r);
  end
 %% apply nonrigid shifts to each z-plane individually
@@ -33,6 +33,9 @@ options_r = NoRMCorreSetParms('d1',size(Y,1),'d2',size(Y,2),'d3',size(Y,3),'bin_
 gSizes = [126,64,32];
 overlaps = [16,16,8];
 maxShifts= [20,10,5];
+if numIterR==0
+    template1 = mean(Y,4);   
+end
 template2 = template1;
 for jj=1:numIterNR
 options_nr = NoRMCorreSetParms('d1',d1,'d2',d2,'bin_width',50, ...
@@ -52,7 +55,7 @@ for ii = 1:d3
         tic; [tmp,shiftsNR,template2(:,:,ii)] = normcorre_batch(squeeze(...
             Y(:,:,ii,:)),options_nr,template1(:,:,ii)); toc % register filtered data
         Y(:,:,ii,:) = permute(tmp,[1,2,4,3]);
-        redImg(:,:,ii,:) = permute(apply_shifts(squeeze(redImg(:,:,ii,:)),shiftsNR,options_nr),[1,2,4,3]);
+        %redImg(:,:,ii,:) = permute(apply_shifts(squeeze(redImg(:,:,ii,:)),shiftsNR,options_nr),[1,2,4,3]);
         greenImg(:,:,ii,:) = permute(apply_shifts(squeeze(greenImg(:,:,ii,:)),shiftsNR,options_nr),[1,2,4,3]);
         
         
