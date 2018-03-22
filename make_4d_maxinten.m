@@ -2,7 +2,7 @@ function [imgMax] = make_4d_maxinten(img4D,pixelSize)
     x2z = pixelSize(3)/pixelSize(2);
     imgSize=size(img4D);
     imgSize(3) = round(imgSize(3)*x2z);
-    
+    imgSize(4) = size(img4D,4);
     imgMax = zeros(imgSize(1)+imgSize(3),imgSize(2)+imgSize(3),imgSize(4));
     zIdx = linspace(1,imgSize(3),size(img4D,3));
     

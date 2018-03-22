@@ -85,7 +85,7 @@ if pass1
         while strcmp(lastwarning,'images:regmex:registrationOutBoundsTermination')
            lastwarn(''); 
            optimizer.MaximumStepLength = optimizer.MaximumStepLength/2;
-           tform = imregtform(moving,fixed,'translation',...
+           tform = imregtform(moving,fixed,'rigid',...
             optimizer,metric,'DisplayOptimization',false,'PyramidLevels',1);
            [~,lastwarning]=lastwarn;
         end
@@ -116,6 +116,7 @@ if pass1
                 'OutputView',imref3d(img_size));
         end   
         waitbar(ii/(2*size(red_img,4)),h);
+        
     end
 
     min_red_stack_aligned=min(red_stack_aligned,[],4);
