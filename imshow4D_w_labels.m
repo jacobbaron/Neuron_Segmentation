@@ -147,7 +147,7 @@ img.CDataMapping='direct';
 img.CData=C1(:,:,Z,S);
 
 cmap_full=[cmap1;cmap];
-
+ftpTot = double(ftpTot);
 img.CData = img.CData*length(cmap1)/max(img.CData(:));
 lb=imshow(labels(:,:,Z), [1 max(labels(:))]);
 lb.CDataMapping='direct';

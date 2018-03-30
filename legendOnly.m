@@ -1,6 +1,11 @@
-function[f]=legendOnly(odor_conc_inf,odor_inf)
+function[f]=legendOnly(odor_conc_inf,odor_inf,f)
      1;
-     f=figure;
+     if ~exist('f','var')
+         f=figure;
+         makefig = 1;
+     else
+         makefig = 0;
+     end
      odor_list=odor_inf.odor_list;
      odor_concentration_list=odor_inf.odor_concentration_list;
      odor_colormap=odor_inf.odor_colormap;
@@ -29,9 +34,12 @@ function[f]=legendOnly(odor_conc_inf,odor_inf)
         ax=gca;
         ax.Visible='Off';
         leg.Units='pixels';
-        f.Units='pixels';
-        f.Position=leg.Position;
-        f.Position(3:4)=leg.Position(3:4)*1.2;
-        leg.Location='best';
-        f.MenuBar='none';
-        f.Name='Odors';
+        if makefig
+            f.Units='pixels';
+            f.Position=leg.Position;
+            f.Position(3:4)=leg.Position(3:4)*1.2;
+            f.MenuBar='none';
+            f.Name='Odors';
+        end
+        leg.Location='northeastoutside';
+        
