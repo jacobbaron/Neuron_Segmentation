@@ -1,4 +1,4 @@
-function  imshow4D_w_labels( Img4D, labels, cmap, disprange, ftpTot)
+function  edit_labels_4D( Img4D, labels, cmap, disprange, ftpTot,CNMFJB,numNeurons)
 %IMSHOW3D displays 3D grayscale images in slice by slice fashion with mouse
 %based slice browsing and window and level adjustment control.
 %
@@ -40,13 +40,10 @@ function  imshow4D_w_labels( Img4D, labels, cmap, disprange, ftpTot)
 %       imshow3D(Image,[20 100]);
 %
 %   See also IMSHOW.
-
-%
-% - Maysam Shahedi (mshahedi@gmail.com)
-% - Released: 1.0.0   Date: 2013/04/15
-% - Revision: 1.1.0   Date: 2013/04/19
-% 
-
+labels_in = labels;
+oldLabels = labels;
+ 
+f= figure('ToolBar','figure','MenuBar','none');
 sno = size(Img4D,4);  % number of slices
 S = round(sno/2);
 zsl = size(Img4D,3);
@@ -146,7 +143,6 @@ hold on;
 img.CDataMapping='direct';
 img.CData=C1(:,:,Z,S);
 
-cmap_full=[cmap1;cmap];
 ftpTot = double(ftpTot);
 img.CData = img.CData*length(cmap1)/max(img.CData(:));
 lb=imshow(labels(:,:,Z), [1 max(labels(:))]);
@@ -155,6 +151,7 @@ lb.CData=labels(:,:,Z)+length(cmap1)+1;
 alphaMap = double(labels>0)*.4.*ftpTot;
 lb.AlphaData=alphaMap(:,:,Z);
 %colormap(lb,cmap);
+cmap_full=[cmap1;cmap];
 colormap(ax,cmap_full)
 
 FigPos = get(gcf,'Position');
@@ -192,13 +189,64 @@ wvalhand = uicontrol('Style', 'edit','Position', Wval_Pos,'String',sprintf('%6.0
 Btnhand = uicontrol('Style', 'pushbutton','Position', Btn_Pos,'String','Auto W/L', 'FontSize', BtnSz, 'Callback' , @AutoAdjust);
 ChBxhand = uicontrol('Style', 'checkbox','Position', ChBx_Pos,'String','Fine Tune', 'BackgroundColor', [0.8 0.8 0.8], 'FontSize', ChBxSz);
 
+edit_menu = uimenu(gcf,'Label','Edit');
+undoBtn = uimenu(edit_menu,'Label','Undo...','Accelerator','Z','Callback',{@undo});
+editBtn = uimenu(edit_menu,'Label','Select region to exclude','Accelerator','E','Callback',{@edit});
+addBtn = uimenu(edit_menu,'Label','Select region to add new neuron','Accelerator','N','Callback',{@new_neuron});
+svBtn = uimenu(edit_menu,'Label','Save changes','Accelerator','S','Callback',{@save_neuron});
+
+
 set (gcf, 'WindowScrollWheelFcn', @mouseScroll);
 set (gcf, 'ButtonDownFcn', @mouseClick);
 set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
 set(gcf,'WindowButtonUpFcn', @mouseRelease)
 set(gcf,'ResizeFcn', @figureResized)
 set(gcf,'WindowButtonMotionFcn',{@MouseMotion})
+    function edit(varargin)
+        cl = imfreehand(gca,'Closed',true);
+       if ~isempty(cl)
+           msk = zeros(size(labels));
+           msk(:,:,Z) = createMask(cl,lb);
+           delete(cl);
+           oldLabels = labels;
+           labels(msk>0) = 0;
+           lb.CData=labels(:,:,Z)+length(cmap1)+1;
+           alphaMap = double(labels>0)*.4.*ftpTot;
+            lb.AlphaData=alphaMap(:,:,Z);
+       end
+    end
 
+    function new_neuron(varargin)
+        cl = imfreehand(gca,'Closed',true);
+       if ~isempty(cl)
+           msk = zeros(size(labels));
+           msk(:,:,Z) = createMask(cl,lb);
+           delete(cl);
+           oldLabels = labels;
+           labels(msk>0) = numNeurons+1;
+           ftpTot(msk>0) = max(ftpTot(:));
+           cmap = generate_cmap(numNeurons+1);
+           cmap_full=[cmap1;cmap];
+           colormap(ax,cmap_full)
+           lb.CData=labels(:,:,Z)+length(cmap1)+1;
+           alphaMap = double(labels>0)*.4.*ftpTot;
+            lb.AlphaData=alphaMap(:,:,Z);
+       end
+    end
+    function undo(varargin)
+        tmp = oldLabels;
+        oldLabels = labels;
+        labels = tmp;
+        lb.CData=labels(:,:,Z)+length(cmap1)+1;
+           alphaMap = double(labels>0)*.4.*ftpTot;
+            lb.AlphaData=alphaMap(:,:,Z);
+        
+    end
+    function save_neuron(varargin)
+        evtdata= sendNewLabel({max(labels(:)),labels});
+        notify(CNMFJB,'ChangeFtp',evtdata);
+        close(f);
+    end
 % -=< Figure resize callback function >=-
     function figureResized(object, eventdata)
         FigPos = get(gcf,'Position');
@@ -228,7 +276,7 @@ set(gcf,'WindowButtonMotionFcn',{@MouseMotion})
         img.CData=C1(:,:,Z,S);
         caxis([Rmin Rmax])
         if sno > 1
-            set(stxthand, 'String', sprintf('t volume %d / %d',S, sno));
+            set(stxthand, 'String', sprintf('t volume %d / %d, t = %0.2f sec',S, sno,CNMFJB.t(S)));
         else
             set(stxthand, 'String', '2D image');
         end

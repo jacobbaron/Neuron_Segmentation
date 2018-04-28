@@ -20,4 +20,10 @@ function [rect] = keep_in_bounds(rect,img_size)
         if rect(2)+rect(4)>img_size(1)
             rect(4)=img_size(1)-rect(2);
         end
+        if rect(3)<1
+            rect(3) = 0;
+        end
+        if rect(4)<1
+            rect(4) = 0;
+        end
 end
