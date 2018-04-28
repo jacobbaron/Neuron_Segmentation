@@ -629,10 +629,10 @@ ID_tab.Units='pixels';
             tsne_data.log_data=ld.log_data;
         end
         tsne_data=struct;
-        tsne_data.odor_inf=load('odor_inf.mat');
+       % tsne_data.odor_inf=load('odor_inf.mat');
         erase_ID_tab;
         tsne_data.odor_seq=img_data.odor_seq;
-        tsne_data.odor_conc_inf = img_data.odor_conc_inf;
+        %tsne_data.odor_conc_inf = img_data.odor_conc_inf;
         tsne_data.t=img_data.t;
          if isfield(img_data,'pixelSize')
             tsne_data.pixelSize=img_data.pixelSize;
@@ -1343,14 +1343,14 @@ ID_tab.Units='pixels';
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
          
          %get all the log mat files in current folder
-         logMatFileList = ListMatLogFiles( pwd );
+         logFileList = ListLogFiles( pwd );
          if ischar(f_list)
             f_list={f_list};
         end
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
-            f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
+            f_list_log = FindBatchLogFile(f_list, logFileList );
             for ii=1:length(f_list)
                     fname=f_list{ii};
                     fnamelog=f_list_log{ii};
