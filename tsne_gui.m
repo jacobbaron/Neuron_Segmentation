@@ -1342,14 +1342,14 @@ ID_tab.Units='pixels';
          f_list=uigetfile('*.nd2;*.h5','MultiSelect','on');   
          
          %get all the log mat files in current folder
-         logMatFileList = ListMatLogFiles( pwd );
+         logFileList = ListLogFiles( pwd );
          if ischar(f_list)
             f_list={f_list};
         end
          if iscell(f_list)
                 %f_list_log=dir('log_*.mat');
                 %f_list_log=uigetfile('log_*','MultiSelect','on');
-                f_list_log = FindBatchMatLogFile(f_list, logMatFileList);
+                f_list_log = FindBatchLogFile(f_list, logFileList );
                     for ii=1:length(f_list)
 %                         try
                             fname=f_list{ii};
