@@ -28,7 +28,7 @@ function [tsne_data]=calculate_cluster_signals(tsne_data,img_stack,odor_sequence
            bkgd,tsne_data.labels,unique_clusters(ii));
        waitbar(ii/length(cluster_signals),clustering_bar);
     end
-    nm_signals = nm_signal(cluster_signals, odor_sequence );
+    nm_signals = nm_signal(cluster_signals, odor_sequence,tsne_data.t);
     
     tsne_data.cluster_signals=cluster_signals;
     tsne_data.nm_signals=nm_signals;

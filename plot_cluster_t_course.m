@@ -47,11 +47,12 @@ end
 [~,name]=fileparts(filename);
 name=strrep(name,'_',' ');
 ratio=4;
+grid = reshape(1:(ratio*length(labels2plot)),ratio,length(labels2plot))';
 for ii=1:length(labels2plot)
     if tabbed
-        subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio],axID(ii))
+        subplot(length(labels2plot),ratio,grid(ii,2:end),axID(ii))
     else
-        subplot(length(labels2plot),ratio,ratio*(ii-1)+[2:ratio])
+        subplot(length(labels2plot),ratio,grid(ii,2:end))
     end
     
     h(ii)=plot(tdata,signals{labels2plot(ii)-1},'LineWidth',3);
@@ -64,12 +65,9 @@ for ii=1:length(labels2plot)
             add_neuron_fire_to_plot(tdata,odor_seq,gca,tsne_data.neuron_fire(labels2plot(ii),:));
         end
     end
-    if ii==1
-        add_legend=1;
-    else
-        add_legend=-1;
-    end
-    patches=add_patches_to_plot_multimix(tsne_data.odor_seq,gca,add_legend,tsne_data.odor_inf);
+
+    
+    patches=tsne_data.odor_seq.add_patches(gca);
     
     if ii==1
         
@@ -114,7 +112,7 @@ end
     axis equal
     ax3D=gca;
     ax3D.Position=[.01,.5,.3,.5];
-    firstOdorIdx = find(tsne_data.odor_seq.odorSeqStep,1);
+    firstOdorIdx = find(tsne_data.t>tsne_data.odor_seq.time_first_odor,1);
     if isfield(tsne_data,'full_max_projs')
         imgProj = tsne_data.full_max_projs;
         

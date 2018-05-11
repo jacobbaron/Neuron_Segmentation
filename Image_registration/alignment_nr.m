@@ -11,10 +11,12 @@ if ~exist('numIterNR','var')
     numIterNR = 3;
 end
 %% do high pass filter of red channel
-Y = zeros(size(redImg));
+Y = zeros(size(redImg),'single');
+Yblr = Y;
 parfor t = 1:T
     filt1 = medfilt3(redImg(:,:,:,t));
     Y(:,:,:,t)  = filt1-imgaussfilt3(filt1,[3,3,2]);
+    Yblr(:,:,:,t) = imgaussfilt3(filt1,[10,10,5]);
 end
 
 %% first register rigidly to align z
@@ -23,11 +25,12 @@ options_r = NoRMCorreSetParms('d1',size(Y,1),'d2',size(Y,2),'d3',size(Y,3),'bin_
 
  for ii=1:numIterR
 
-    tic; [Y,shiftsR,template1] = normcorre_batch(Y,options_r); toc % register filtered data
+    tic; [Yblr,shiftsR,template1] = normcorre_batch(Yblr,options_r); toc % register filtered data
 
-    %redImg = apply_shifts(redImg,shiftsR,options_r);
+    Y = apply_shifts(redImg,shiftsR,options_r);
     greenImg = apply_shifts(greenImg,shiftsR,options_r);
  end
+ clear Yblr
 %% apply nonrigid shifts to each z-plane individually
 [d1,d2,d3,T] = size(Y);
 gSizes = [126,64,32];
