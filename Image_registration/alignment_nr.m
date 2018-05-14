@@ -1,4 +1,4 @@
-function [Y,greenImg,template2,errz] = alignment_nr(redImg,greenImg,numIterR,numIterNR)
+function [Y,greenImg,template2] = alignment_nr(redImg,greenImg)
 [d1,d2,d3, T] = size(redImg);
 % Tend = cumsum(imgSizes(4,:));
 % Tstart = [1,Tend(1:end-1)+1];
@@ -13,12 +13,14 @@ end
 %% do high pass filter of red channel
 Y = zeros(size(redImg),'single');
 Yblr = Y;
+%parfor_progress(T);
 parfor t = 1:T
     filt1 = medfilt3(redImg(:,:,:,t));
     Y(:,:,:,t)  = filt1-imgaussfilt3(filt1,[3,3,2]);
     Yblr(:,:,:,t) = imgaussfilt3(filt1,[10,10,5]);
+    %parfor_progress;
 end
-
+%parfor_progress(0);
 %% first register rigidly to align z
 options_r = NoRMCorreSetParms('d1',size(Y,1),'d2',size(Y,2),'d3',size(Y,3),'bin_width',50,'max_shift',[50,50,15],'iter',1,'correct_bidir',false);
 
@@ -27,47 +29,29 @@ options_r = NoRMCorreSetParms('d1',size(Y,1),'d2',size(Y,2),'d3',size(Y,3),'bin_
 
     tic; [Yblr,shiftsR,template1] = normcorre_batch(Yblr,options_r); toc % register filtered data
 
-    Y = apply_shifts(redImg,shiftsR,options_r);
+    Y = apply_shifts(Y,shiftsR,options_r);
     greenImg = apply_shifts(greenImg,shiftsR,options_r);
  end
  clear Yblr
 %% apply nonrigid shifts to each z-plane individually
 [d1,d2,d3,T] = size(Y);
-gSizes = [126,64,32];
-overlaps = [16,16,8];
-maxShifts= [20,10,5];
-if numIterR==0
-    template1 = mean(Y,4);   
-end
-template2 = template1;
-for jj=1:numIterNR
-options_nr = NoRMCorreSetParms('d1',d1,'d2',d2,'bin_width',50, ...
-        'grid_size',[gSizes(jj),gSizes(jj)],'us_fac',10,'max_dev',[4,4], ...
-        'overlap_pre',[overlaps(jj),overlaps(jj)],'overlap_post',[overlaps(jj),overlaps(jj)],'max_shift',maxShifts(jj),'plot_flag',true,...
+gSizes = 64;
+overlaps = 16;
+maxShifts= 10;
+
+options_nr = NoRMCorreSetParms('d1',d1,'d2',d2,'d3',d3,'bin_width',50, ...
+        'grid_size',[gSizes,gSizes,6],'us_fac',10,'max_dev',[4,4,2], ...
+        'overlap_pre',[overlaps,overlaps,2],'overlap_post',[8,8,2],...
+        'max_shift',[maxShifts,maxShifts,3],'plot_flag',true,...
         'correct_bidir',false);
 
-errz = {};
 %shiftsNR = shiftsR;
 %shiftsCell = 
 %M2 = M1;
 %redImgAlignedNR = redImgAligned;
 %greenImgAlignedNR = greenImgAligned;
+    [Y,shiftsNR,template2] = normcorre_batch(Y,options_nr);
+    greenImg = apply_shifts(greenImg,shiftsNR,options_nr);
 
-for ii = 1:d3
-    try
-        tic; [tmp,shiftsNR,template2(:,:,ii)] = normcorre_batch(squeeze(...
-            Y(:,:,ii,:)),options_nr,template1(:,:,ii)); toc % register filtered data
-        Y(:,:,ii,:) = permute(tmp,[1,2,4,3]);
-        %redImg(:,:,ii,:) = permute(apply_shifts(squeeze(redImg(:,:,ii,:)),shiftsNR,options_nr),[1,2,4,3]);
-        greenImg(:,:,ii,:) = permute(apply_shifts(squeeze(greenImg(:,:,ii,:)),shiftsNR,options_nr),[1,2,4,3]);
-        
-        
-    catch ME
-        errz{end+1} = {ii,ME};
-        fprintf('%s In %s',ME.message, ME.stack(1).name);
-    end
-    fprintf('Slice %d of %d, iter %d of %d\n',ii,d3,jj,numIterNR);
-end
-template1 = template2;
 end
 
