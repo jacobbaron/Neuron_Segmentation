@@ -401,7 +401,7 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
     'Callback',{@cancel},...
     'Visible','off');
 1;
-f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
+%f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
 
 %set (gcf, 'ButtonDownFcn', @mouseClick);
 %set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
@@ -738,7 +738,7 @@ f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
             hObj.Value = S;
         end
         
-        tic;img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;toc
+        img.CData=(green_mov(:,:,Z,S)-imin)*scale_factor+1;
         
         %caxis([Rmin Rmax])
         if sno > 1
@@ -1576,7 +1576,8 @@ f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
         cmap=[0,0,0;1,1,1];
         cmap1=colormap(ax_foreground,gray(100));
         imin=double(min(green_mov(green_mov(:,:,:,1)>0)));
-        imax=double(max(green_mov(:)));
+        imax=double(prctile(green_mov(:),99.95));
+        green_mov(green_mov>imax) = imax;
         scale_factor=(size(cmap1,1)-1)/(imax-imin);
         %C1=(tsne_data(1).aligned_green_img-imin)
         hold(ax_foreground,'on');
@@ -2076,7 +2077,7 @@ f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
         %maxinten_t_hand.Callback={@compareSlider};
         
         plot_tsne_clusters;
-        f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
+        %f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
     end
     function update_cluster_signals(varargin)
         if clustered
@@ -2309,30 +2310,30 @@ f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
         
     end
     function MouseMotion(varargin)
-        1;
-        show=0;
-        if strcmp(tgroup.SelectedTab.Title,'Compare Neurons')
-            obj=hittest(gcf);
-            if ischar(obj.Type)
-                if strcmp(obj.Type,'patch')
-                    1;
-                    ax= gca;
-                    
-                    C = get(gca,'CurrentPoint');
-                    pt = C(1,1:2);
-                    show=1;
-                    xoffset = ax.XLim(2)*.025;
-                    yoffset = ax.YLim(2);
-                    delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
-                    text(pt(1)+xoffset,pt(2)+yoffset,strtrim(obj.Tag),'backgroundcolor',[1 1 .8],'tag','mytooltip','edgecolor',[0 0 0],...
-                        'hittest','off');
-                end
-            end
-            
-        end
-        if ~show
-            delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
-        end
+%         1;
+%         show=0;
+% %         if strcmp(tgroup.SelectedTab.Title,'Compare Neurons')
+% %             obj=hittest(gcf);
+% %             if ischar(obj.Type)
+% %                 if strcmp(obj.Type,'patch')
+% %                     1;
+% %                     ax= gca;
+% %                     
+% %                     C = get(gca,'CurrentPoint');
+% %                     pt = C(1,1:2);
+% %                     show=1;
+% %                     xoffset = ax.XLim(2)*.025;
+% %                     yoffset = ax.YLim(2);
+% %                     delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
+% %                     text(pt(1)+xoffset,pt(2)+yoffset,strtrim(obj.Tag),'backgroundcolor',[1 1 .8],'tag','mytooltip','edgecolor',[0 0 0],...
+% %                         'hittest','off');
+% %                 end
+% %             end
+% %             
+% %         end
+% %         if ~show
+%             delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
+%         end
     end
 %% classifier functions
     function idNeurons(varargin)
