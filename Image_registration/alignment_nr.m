@@ -17,7 +17,7 @@ Yblr = Y;
 parfor t = 1:T
     filt1 = medfilt3(redImg(:,:,:,t));
     Y(:,:,:,t)  = filt1-imgaussfilt3(filt1,[3,3,2]);
-    Yblr(:,:,:,t) = imgaussfilt3(filt1,[10,10,5]);
+    %Yblr(:,:,:,t) = imgaussfilt3(filt1,[10,10,5]);
     %parfor_progress;
 end
 %parfor_progress(0);
@@ -27,7 +27,7 @@ options_r = NoRMCorreSetParms('d1',size(Y,1),'d2',size(Y,2),'d3',size(Y,3),'bin_
 
  for ii=1:numIterR
 
-    tic; [Yblr,shiftsR,template1] = normcorre_batch(Yblr,options_r); toc % register filtered data
+    tic; [Yblr,shiftsR,template1] = normcorre_batch(Yblr,options_r, Yblr(:,:,:,1)); toc % register filtered data
 
     Y = apply_shifts(Y,shiftsR,options_r);
     greenImg = apply_shifts(greenImg,shiftsR,options_r);
@@ -40,10 +40,10 @@ overlaps = 16;
 maxShifts= 10;
 
 options_nr = NoRMCorreSetParms('d1',d1,'d2',d2,'d3',d3,'bin_width',50, ...
-        'grid_size',[gSizes,gSizes,6],'us_fac',10,'max_dev',[4,4,2], ...
-        'overlap_pre',[overlaps,overlaps,2],'overlap_post',[8,8,2],...
+        'grid_size',[32,32,2],'us_fac',10,'max_dev',[4,4,1], ...
+        'overlap_pre',[16,16,1],'overlap_post',[16,16,1],...
         'max_shift',[maxShifts,maxShifts,3],'plot_flag',true,...
-        'correct_bidir',false);
+        'correct_bidir',false,'iter',2);
 
 %shiftsNR = shiftsR;
 %shiftsCell = 

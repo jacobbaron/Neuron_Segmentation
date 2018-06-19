@@ -39,7 +39,7 @@ gSizes = [126,64,32];
 overlaps = [16,16,8];
 maxShifts= [20,10,5];
 if numIterR==0
-    template1 = mean(Y,4);   
+    template1 = Y(:,:,:,1);   
 end
 template2 = template1;
 for jj=1:numIterNR
