@@ -1,6 +1,6 @@
-function [f,ax,ax3D]=plot_cluster_t_course(varargin)%tdata,signals,odor_seq,red_img,labels,filename,labels2plot)
+function [f,ax,ax3D]=plot_cluster_t_course(varargin)
 tabbed=0;
-if isstruct(varargin{1}) %use tsne_data to plot
+if isstruct(varargin{1}) %use tsne_data structure to plot
     tsne_data=varargin{1};
     if isfield(tsne_data,'odor_list')
         odor_inf.odor_list=tsne_data.odor_list;
@@ -11,43 +11,43 @@ if isstruct(varargin{1}) %use tsne_data to plot
     red_img=varargin{1}.aligned_red_img;
     labels=varargin{1}.labels;
     filename=varargin{1}.filenames{1};
-    if any(strcmp(varargin,'raw_sig'))
+    if any(strcmp(varargin,'raw_sig')) %use raw signal instead of normalized signal
         signals=varargin{1}.cluster_signals;
     else
-        signals=varargin{1}.nm_signals;
+        signals=varargin{1}.nm_signals; %normalized signal
     end
-    if any(strcmp(varargin,'labels2plot'))
+    if any(strcmp(varargin,'labels2plot')) %only plot responses of some neruons
         labels2plot = varargin{find(strcmp(varargin,'labels2plot'))+1}+1;
     else
-        labels2plot=unique(labels(labels>1));
+        labels2plot=unique(labels(labels>1));%otherwise plot all of them
     end
     if nargin==2
         tabbed=1;
-        axID=varargin{2};
+        axID=varargin{2}; %if the axis handle is provided, plot in that handle.
     end
-elseif nargin==7
+elseif nargin==7%if structure datatype not provided, get all variables manually (not recomended)
     [tdata,signals,odor_seq,red_img,labels,filename,labels2plot]=...
-        varargin{:};
+        varargin{:}; %plot subset of neurons
     
 else
     [tdata,signals,odor_seq,red_img,labels,filename]=...
         varargin{:};
-    labels2plot=unique(labels(labels>1));
+    labels2plot=unique(labels(labels>1)); %plot all neurons
 end
         
-num_clusters=length(unique(labels(labels>1)));
+num_clusters=length(unique(labels(labels>1))); %total number of neurons (labels==1 is considered noise)
 
-cmap=generate_cmap(length(labels2plot));
-if ~tabbed
-    f=figure('units','normalized','outerposition',[0 0 1 1]);
+cmap=generate_cmap(length(labels2plot)); %make a colormap for the neurons
+if ~tabbed %if generating a new figure
+    f=figure('units','normalized','outerposition',[0 0 1 1]); 
 else
     f=[];
 end
 
 [~,name]=fileparts(filename);
 name=strrep(name,'_',' ');
-ratio=4;
-grid = reshape(1:(ratio*length(labels2plot)),ratio,length(labels2plot))';
+ratio=4; %size ratio between image of neuron and time traces
+grid = reshape(1:(ratio*length(labels2plot)),ratio,length(labels2plot))'; %create grid of subplots
 for ii=1:length(labels2plot)
     if tabbed
         subplot(length(labels2plot),ratio,grid(ii,2:end),axID(ii))
@@ -61,13 +61,13 @@ for ii=1:length(labels2plot)
     ax(ii).YLim=[min(signals{labels2plot(ii)-1}) - 0.1 * max(signals{labels2plot(ii)-1}),max(signals{labels2plot(ii)-1}) + 0.1 * max(signals{labels2plot(ii)-1})];
     xlim([0,max(tdata)]);
     if exist('tsne_data','var')
-        if isfield(tsne_data,'neuron_fire')
-            add_neuron_fire_to_plot(tdata,odor_seq,gca,tsne_data.neuron_fire(labels2plot(ii),:));
+        if isfield(tsne_data,'neuron_fire') %if binary neuron fire information was generated, plot that also
+            add_neuron_fire_to_plot(tdata,odor_seq,gca,tsne_data.neuron_fire(labels2plot(ii),:)); 
         end
     end
 
     
-    patches=tsne_data.odor_seq.add_patches(gca);
+    patches=tsne_data.odor_seq.add_patches(gca); %add patches to indicate when odors were delivered
     
     if ii==1
         
