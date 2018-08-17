@@ -2100,10 +2100,14 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
             if isfield(tsne_data,'which_side')
                 exptID.side = tsne_data.which_side;
             end
+            tsne_data = rmfield(tsne_data,'r');
+            
             for ii=1:length(tsne_data.nm_signals)
                 tsne_data.r(ii,:) = get_peak_response(tsne_data.odor_seq,tsne_data.t,tsne_data.nm_signals{ii},...
                     exptID,tsne_data.neuronID{ii});
             end
+            r = tsne_data.r;
+            
             compareable=1;
         else
             warndlg('Cluster first!')
