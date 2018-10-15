@@ -1,0 +1,1 @@
+function [newImgSize] = determine_crop(imSize, shifts, ROISize)

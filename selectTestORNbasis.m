@@ -1,5 +1,5 @@
 function [out]=selectTestORNbasis()
-    
+    %gui to select which ORNs to include with classifier
     
     orns={'33b','45a','83a','35a','42a','59a','1a','45b','24a','67b','85c','13a','30a','82a','22c','42b','74a','94a'};
     

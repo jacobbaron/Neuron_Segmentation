@@ -1,4 +1,4 @@
-function [tsne_data]=CIA_TSNE(img_stack,foreground,odor_sequence,...
+function [groups,tsne_preclustered]=CIA_TSNE(img_stack,foreground,odor_sequence,...
     varargin)
 %required arguments are img_stack, foreground, and odor_sequence
 %options are 'tsne_data','tsne_iter','alpha', 'k'
@@ -34,7 +34,7 @@ end
 if use_space
    scale_factor = varargin{find(strcmp('scale_factor',varargin))+1};
 else
-    scale_factor=1
+    scale_factor=1;
 end
 %% reshape image stacks
 
@@ -45,14 +45,15 @@ end
     
 tsne_bar=waitbar(0,'Starting t-SNE...');
 foreground_stack=repmat(foreground,1,1,1,size(img_stack,4));
-img_stack_foreground=img_stack;
-img_stack_foreground(~foreground_stack)=0;
+%img_stack_foreground=img_stack;
+%img_stack_foreground(~foreground_stack)=0;
 foreground_list=find(foreground);
 img_list=reshape(img_stack,size(img_stack,1)*size(img_stack,2)*size(img_stack,3),size(img_stack,4));
 img_list_foreground=img_list(foreground_list,:);
+clear img_list;
 if use_space
-    max_img = max(img_stack_foreground(:));
-    min_img = min(img_stack_foreground(:));
+    max_img = max(img_list_foreground(:));
+    min_img = min(img_list_foreground(:));
     idx=find(foreground);
     [i,j,k] = ind2sub(size(foreground),idx);
     i = i*max_img*scale_factor/max(i);
@@ -89,8 +90,8 @@ end
 
 %% save relevant variables in a struct
 
-tsne_data=struct;
-tsne_data.foreground=foreground;
-tsne_data.precluster_groups=groups;
-tsne_data.tsne_result=tsne_preclustered;
+% tsne_data=struct;
+% tsne_data.foreground=foreground;
+% tsne_data.precluster_groups=groups;
+% tsne_data.tsne_result=tsne_preclustered;
 close(tsne_bar);

@@ -62,7 +62,7 @@ for ii=1:length(labels2plot)
         end
     end
     
-    [patches]=add_patches_to_plot(tsne_data.odor_conc_inf,gca,0,tsne_data.odor_inf);
+    [patches]=tsne_data.odor_seq.add_patches(gca);
     white_bkd(ii)=patch(ax(ii),[ax(ii).XLim,fliplr(ax(ii).XLim)],...
         repelem(ax(ii).YLim,2),'white','EdgeColor','none','FaceColor','white','FaceAlpha',0);
     %delete(leg);

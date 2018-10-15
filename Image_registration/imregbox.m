@@ -41,6 +41,11 @@ if any(strcmp(varargin,'crop'))
 else
     crop=1;
 end
+if any(strcmp(varargin,'pass1'))
+    pass1=varargin{find(strcmp(varargin,'pass1'))+1};
+else
+    pass1=1;
+end
 
 %% 
 scaleview=round(scalexy/2);
@@ -69,80 +74,87 @@ green_stack_aligned=zeros(size(green_img));
 green_stack_aligned(:,:,:,1)=green_img(:,:,:,1);
 red_stack_aligned=zeros(size(red_img));
 red_stack_aligned(:,:,:,1)=red_img(:,:,:,1);
-tic
-for ii=2:size(red_img,4)
-    
-    moving=red_stack_sub(:,:,:,ii);
-    tform = imregtform(moving,fixed,'translation',...
-        optimizer,metric,'DisplayOptimization',false,'PyramidLevels',1);
-    [~,lastwarning]=lastwarn;
-    while strcmp(lastwarning,'images:regmex:registrationOutBoundsTermination')
-       lastwarn(''); 
-       optimizer.MaximumStepLength = optimizer.MaximumStepLength/2;
-       tform = imregtform(moving,fixed,'translation',...
-        optimizer,metric,'DisplayOptimization',false,'PyramidLevels',1);
-       [~,lastwarning]=lastwarn;
-    end
-    optimizer.MaximumStepLength = MaxStepLength_init;
-    
-    
-    tform_scaled{ii}=tform;
-    if length(size(fixed))==2
-    
-    %tform_scaled{ii}.T=tform.T*tform_scale.T;
-    
-        tform_scaled{ii}.T(3,1:2)=tform_scaled{ii}.T(3,1:2)*scaleview;
-        red_stack_aligned(:,:,:,ii)=imwarp(red_img(:,:,:,ii),tform_scaled{ii},...
-            'OutputView',imref2d(img_size));
-        red_sub_aligned(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform,...
-            'OutputView',imref2d(size(red_stack_sub(:,:,:,1))));
-     green_stack_aligned(:,:,:,ii)=imwarp(green_img(:,:,:,ii),tform_scaled{ii},...
-            'OutputView',imref2d(img_size));
-    else
-        tform_scaled{ii}.T(4,1:2)=tform_scaled{ii}.T(4,1:2)*scaleview;
-        tform_scaled{ii}.T(4,3)=tform_scaled{ii}.T(4,3)*scaleviewz;
-        red_stack_aligned(:,:,:,ii)=imwarp(red_img(:,:,:,ii),tform_scaled{ii},...
-            'OutputView',imref3d(img_size));
-        red_sub_aligned(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform,...
-            'OutputView',imref3d(size(red_stack_sub(:,:,:,1))));
-     
-        green_stack_aligned(:,:,:,ii)=imwarp(green_img(:,:,:,ii),tform_scaled{ii},...
-            'OutputView',imref3d(img_size));
-    end   
-    waitbar(ii/(2*size(red_img,4)),h);
-end
+if pass1
+    tic
+    for ii=2:size(red_img,4)
 
-min_red_stack_aligned=min(red_stack_aligned,[],4);
-idx=find(min_red_stack_aligned~=0);
-[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
-red_stack_cropped=box_filt4D(red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:),...
-    [scalexy2,scalexy2,1]);
-green_stack_cropped=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
-red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
-fixed_max=red_stack_cropped_max(:,:,1);
-red_stack_aligned=red_stack_cropped;
-green_stack_aligned=green_stack_cropped;
+        moving=red_stack_sub(:,:,:,ii);
+        tform = imregtform(moving,fixed,'translation',...
+            optimizer,metric,'DisplayOptimization',false,'PyramidLevels',1);
+        [~,lastwarning]=lastwarn;
+        while strcmp(lastwarning,'images:regmex:registrationOutBoundsTermination')
+           lastwarn(''); 
+           optimizer.MaximumStepLength = optimizer.MaximumStepLength/2;
+           tform = imregtform(moving,fixed,'translation',...
+            optimizer,metric,'DisplayOptimization',false,'PyramidLevels',1);
+           [~,lastwarning]=lastwarn;
+        end
+        optimizer.MaximumStepLength = MaxStepLength_init;
+
+
+        tform_scaled{ii}=tform;
+        if length(size(fixed))==2
+
+        %tform_scaled{ii}.T=tform.T*tform_scale.T;
+
+            tform_scaled{ii}.T(3,1:2)=tform_scaled{ii}.T(3,1:2)*scaleview;
+            red_stack_aligned(:,:,:,ii)=imwarp(red_img(:,:,:,ii),tform_scaled{ii},...
+                'OutputView',imref2d(img_size));
+            red_sub_aligned(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform,...
+                'OutputView',imref2d(size(red_stack_sub(:,:,:,1))));
+         green_stack_aligned(:,:,:,ii)=imwarp(green_img(:,:,:,ii),tform_scaled{ii},...
+                'OutputView',imref2d(img_size));
+        else
+            tform_scaled{ii}.T(4,1:2)=tform_scaled{ii}.T(4,1:2)*scaleview;
+            tform_scaled{ii}.T(4,3)=tform_scaled{ii}.T(4,3)*scaleviewz;
+            red_stack_aligned(:,:,:,ii)=imwarp(red_img(:,:,:,ii),tform_scaled{ii},...
+                'OutputView',imref3d(img_size));
+            red_sub_aligned(:,:,:,ii)=imwarp(red_stack_sub(:,:,:,ii),tform,...
+                'OutputView',imref3d(size(red_stack_sub(:,:,:,1))));
+
+            green_stack_aligned(:,:,:,ii)=imwarp(green_img(:,:,:,ii),tform_scaled{ii},...
+                'OutputView',imref3d(img_size));
+        end   
+        waitbar(ii/(2*size(red_img,4)),h);
+    end
+
+    min_red_stack_aligned=min(red_stack_aligned,[],4);
+    idx=find(min_red_stack_aligned~=0);
+    %[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
+    %red_stack_cropped=box_filt4D(red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:),...
+     %   [scalexy2,scalexy2,1]);
+     red_stack_cropped=box_filt4D(red_stack_aligned,[scalexy2,scalexy2,1]);
+    %green_stack_cropped=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
+    green_stack_cropped=green_stack_aligned;
+    red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
+    fixed_max=red_stack_cropped_max(:,:,1);
+    red_stack_aligned=red_stack_cropped;
+    green_stack_aligned=green_stack_cropped;
+else
+    red_stack_cropped = red_img;
+    red_stack_aligned = red_img;
+    green_stack_cropped = green_img;
+    green_stack_aligned  = green_img;
+end
 if doublepass==2
     if crop
-     f=figure;
-     imagesc(max(red_stack_cropped_max,[],3));
-     title('Select ROI')
-     crop2=getrect;
-     rng_i=round(crop2(2):crop2(2)+crop2(4));
-     rng_j=round(crop2(1):crop2(1)+crop2(3));
-     red_stack_cropped=red_stack_cropped(rng_i,rng_j,:,:);
-     green_stack_cropped=green_stack_cropped(rng_i,rng_j,:,:);
-%     [red_stack_cropped_max,xrange,yrange]=crop_img(max(red_stack_cropped_max,[],3));
-%     red_stack_aligned=red_stack_aligned(yrange,xrange,:,:);
-%     green_stack_aligned=green_stack_aligned(yrange,xrange,:,:);
-    close(f);
+        f=figure;
+        imagesc(max(red_stack_cropped_max,[],3));
+        title('Select ROI')
+        crop2=getrect;
+        rng_i=round(crop2(2):crop2(2)+crop2(4));
+        rng_j=round(crop2(1):crop2(1)+crop2(3));
+        red_stack_cropped=red_stack_cropped(rng_i,rng_j,:,:);
+        green_stack_cropped=green_stack_cropped(rng_i,rng_j,:,:);
+        %     [red_stack_cropped_max,xrange,yrange]=crop_img(max(red_stack_cropped_max,[],3));
+        %     red_stack_aligned=red_stack_aligned(yrange,xrange,:,:);
+        %     green_stack_aligned=green_stack_aligned(yrange,xrange,:,:);
+        close(f);
     end
   %  if size(red_stack_cropped,3)>1
-        red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
-  %  else
-%        red_stack_cropped_max=red_stack_cropped;
- %   end
-     fixed_max=red_stack_cropped_max(:,:,1);
+    red_stack_cropped_max=squeeze(max(red_stack_cropped,[],3));
+  
+    fixed_max=red_stack_cropped_max(:,:,1);
     red_stack_aligned=red_stack_cropped;
     green_stack_aligned=green_stack_cropped;
     
@@ -181,11 +193,11 @@ if doublepass==2
         end
     end
 end
-min_red_stack_aligned=min(red_stack_aligned,[],4);
-idx=find(min_red_stack_aligned~=0);
-[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
-red_stack_aligned = red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
-green_stack_aligned=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
+%min_red_stack_aligned=min(red_stack_aligned,[],4);
+%idx=find(min_red_stack_aligned~=0);
+%[i,j,k]=ind2sub(size(min_red_stack_aligned),idx);
+%red_stack_aligned = red_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
+%green_stack_aligned=green_stack_aligned(min(i):max(i),min(j):max(j),min(k):max(k),:);
 
 green_stack_aligned=gpu_medfilt4( green_stack_aligned,'green',2,0);
 red_stack_aligned=gpu_medfilt4(red_stack_aligned,'red',2,0);

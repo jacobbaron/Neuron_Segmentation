@@ -8,7 +8,7 @@ function pairedLogFileList = FindBatchMatLogFile(movieFileList, logMatFileList)
         movieFileName = movieFileList{i};
         
         % look for log file for each movie files
-        logFileName = FindSingleMatLogFile(movieFileName, logMatFileList);
+        logFileName = FindSingleH5LogFile(movieFileName, logMatFileList);
         
         % save the log files into a list
         pairedLogFileList{i} = logFileName;

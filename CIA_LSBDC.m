@@ -17,16 +17,16 @@ end
 %clustering part of the t-SNE neuron segmentation algorthim
 
 foreground=tsne_data.foreground;
-foreground_list=find(foreground);
-groups=tsne_data.precluster_groups;
+%foreground_list=find(foreground);
+%groups=tsne_data.precluster_groups;
 tsne_preclustered=tsne_data.tsne_result;
 
 %% clustering
 
 %run the clustering (via elki)
 clustering_bar=waitbar(0,'Running clustering...');
-group_clusters=lsbdc_elki(tsne_preclustered,k,alpha)+1;
-clusters=group_clusters(groups);
+clusters=lsbdc_elki(tsne_preclustered,k,alpha)+1;
+%clusters=group_clusters(groups);
 
 
 if ~any(clusters>1)
@@ -42,8 +42,8 @@ cmap=generate_cmap(length(unique_clusters(unique_clusters>1)));
 
 
 labels=zeros(size(foreground));
-labels(foreground_list)=clusters;
-tsne_data.clustering_output=group_clusters;
+labels(foreground>0)=clusters;
+tsne_data.clustering_output=clusters;
 tsne_data.cmap=cmap;
 tsne_data.labels=labels;
 close(clustering_bar);

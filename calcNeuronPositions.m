@@ -1,7 +1,7 @@
-function [neuron_positions,neuron_variance]=calcNeuronPositions(tsne_data,filename)
+function [neuron_positions,neuron_variance]=calcNeuronPositions(tsne_data,filename,batch)
     if isfield(tsne_data,'filenames')
         fname=tsne_data.filenames{1};
-    elseif exist('filename','var')
+    elseif isempty(filename)
         fname=filename;
     else
         fname='';
@@ -9,12 +9,15 @@ function [neuron_positions,neuron_variance]=calcNeuronPositions(tsne_data,filena
     if isfield(tsne_data,'which_side')
         choice=tsne_data.which_side{2};
         DorV=tsne_data.which_side{1};
-    else
+    elseif ~batch
     
         choice=questdlg(sprintf('What side is movie %s from?',fname),...
             'Choose Side','Left','Right','Right');
         DorV=questdlg(sprintf('What side from movie %s is closest to objective?',fname),...
             'Choose Side','Dorsal','Ventral','Dorsal');
+    else
+        choice = 'Left';
+        DorV = 'Dorsal';
     end
     
    switch choice
