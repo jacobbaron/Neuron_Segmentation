@@ -1070,7 +1070,7 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
                 + (Zmesh.*std_b(4)).^2);
             tsne_data.background = fit;
             tsne_data.background_err = err_fit;
-            
+            tsne_data.roi = [1,roi_size(2);1,roi_size(1)];
             
             
             %                 choice='';
