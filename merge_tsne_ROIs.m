@@ -1,9 +1,19 @@
 function [tsneF, foregroundF] = merge_tsne_ROIs(groups, tsne_precluster, foreground)
-%%
+%% if there were multiple ROIs to run tSNE separately, merge them here
 start = 1;
+if ~iscell(foreground)
+    foreground = {foreground};
+end
+if ~iscell(groups)
+    groups = {groups};
+end
+if ~iscell(tsne_precluster)
+    tsne_precluster = {tsne_precluster};
+end
 tsneImg = zeros(size(foreground{1}));
 previousMax = 0;
 dim = 0;
+
 for ii=1:length(groups)
     tsne{ii} = tsne_precluster{ii}(groups{ii},:);
     if ii>1
@@ -15,6 +25,7 @@ for ii=1:length(groups)
     tsneImg(foreground{ii}) = tsneIdx;
     start = length(tsne{ii})+1;
 end
+
 tsneF = cell2mat(tsne');
 tsneF = tsneF(tsneImg(tsneImg>0),:);
 for ii=1:size(tsneF,2)

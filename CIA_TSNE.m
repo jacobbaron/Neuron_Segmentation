@@ -86,12 +86,4 @@ end
 
 
 
-
-
-%% save relevant variables in a struct
-
-% tsne_data=struct;
-% tsne_data.foreground=foreground;
-% tsne_data.precluster_groups=groups;
-% tsne_data.tsne_result=tsne_preclustered;
 close(tsne_bar);

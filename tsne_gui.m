@@ -401,7 +401,7 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
     'Callback',{@cancel},...
     'Visible','off');
 1;
-%f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
+f_tSNE.WindowButtonMotionFcn = {@MouseMotion};
 
 %set (gcf, 'ButtonDownFcn', @mouseClick);
 %set(get(gca,'Children'),'ButtonDownFcn', @mouseClick);
@@ -520,20 +520,31 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
             %run_pca;
             
             foreground=tsne_data.labels>0;
-            foreground_img=tsne_data.labels+1;
+            fg=tsne_data.labels+1;
             if isfield(tsne_data,'dist')
                 pca_done = 1;
                 min_slider=min(tsne_data(1).dist(:));
                 max_slider=max(tsne_data(1).dist(:));
                 inten_sld.Min = min_slider;
                 inten_sld.Max = max_slider;
+                T=min(tsne_data(1).dist(:));
+                fg=tsne_data(1).dist>T;
+                step=(max_slider-min_slider)/1000;
+                while length(find(fg))>=length(find(foreground))
+                    T=T+step;
+                    fg=tsne_data(1).dist>T;
+                end
+                inten_sld.Value=T;
+                %                 prepare_foreground;
             end
+            foreground_img = foreground;
             undo_item.Enable='Off';
             display_foreground;
             plot_tsne_clusters;
             %if ~isfield(tsne_data,'background_level')
             %    tsne_data.background_level=compute_background(foreground,tsne_data(1).aligned_green_img);
             %end
+            
             try
                 close(fLeg);
             end
@@ -675,10 +686,10 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
         cmap_full=[cmap1;cmap];
         colormap(ax_foreground,cmap_full)
         T=hObj.Value;
-        if isfield(tsne_data,'FGMask')
+        if isfield(tsne_data,'FGMask') %regions to exclude from foreground (if using ROIs etc)
             msk = tsne_data.FGMask{roiIdx};
         else
-            msk = ones(size(tsne_data(1).dist));
+            msk = false(size(tsne_data(1).dist));
         end
         foreground_img=tsne_data(1).dist>T & ~msk;
         lb.CData=foreground_img(:,:,Z)+length(cmap1);
@@ -943,7 +954,7 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
                 [tsne_data(1).aligned_red_img,shifts] = ...
                     normcorre(img_data.img_stacks{2},options_rigid);
                 
-                tsne_data(1).aligned_green_img = apply_shifts_serial(...
+                tsne_data(1).aligned_green_img = apply_shifts(...
                     img_data.img_stacks{1},...
                     shifts,options_rigid);
                 tsne_data(1).aligned_red_img = cast(tsne_data(1).aligned_red_img,'uint16');
@@ -1070,6 +1081,9 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
                 + (Zmesh.*std_b(4)).^2);
             tsne_data.background = fit;
             tsne_data.background_err = err_fit;
+            if ~isfield(tsne_data,'roi')
+                tsne_data.roi = [1,size(tsne_data.background,1);1,size(tsne_data.background,2)];
+            end
             
             
             
@@ -1162,21 +1176,26 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
     function run_pca(varargin)
         
         pca_num=40;
-        
+        [d1,d2,d3,T] = size(tsne_data(1).aligned_green_img);
+        %reshape movie from [x,y,z,t] to [x*y*z,t]
         Img4D_list=reshape(tsne_data(1).aligned_green_img,...
-            size(tsne_data(1).aligned_green_img,1)*...
-            size(tsne_data(1).aligned_green_img,2)*...
-            size(tsne_data(1).aligned_green_img,3),...
-            size(tsne_data(1).aligned_green_img,4));
+            d1*d2*d3,T);
+        %ignore voxels that are 0 at any point in time, don't include them
+        %in the foreground. 
         nonzeros=~any(Img4D_list==0,2);
         Img4D_list_nonzero=Img4D_list(nonzeros,:);
+        
         coeffs=zeros(size(Img4D_list,1),pca_num);
+        %
         coeffs(nonzeros,:)=pca(double(Img4D_list_nonzero)',...
             'NumComponents',pca_num);
+        %calculate euclidean distance from the origin in 40d PC space
         tsne_data(1).dist=reshape(sqrt(sum(coeffs.^2,2)),...
             size(tsne_data(1).aligned_green_img,1),...
             size(tsne_data(1).aligned_green_img,2),...
             size(tsne_data(1).aligned_green_img,3));
+        
+        %set front panel parmeters
         min_slider=min(tsne_data(1).dist(:));
         max_slider=max(tsne_data(1).dist(:));
         inten_sld.Min = min_slider;
@@ -1185,6 +1204,7 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
         T=min(tsne_data(1).dist(:));
         foreground_img=tsne_data(1).dist>T;
         step=(max_slider-min_slider)/1000;
+        %start with 2000 voxels in foreground
         while length(find(foreground_img))>=2000
             T=T+step;
             foreground_img=tsne_data(1).dist>T;
@@ -1525,7 +1545,7 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
             
             %aligned_green_img_full = tsne_data(1).aligned_green_img;
             %aligned_red_img_full = tsne_data(1).aligned_red_img;
-            foreground = any(cell2mat(permute(tsne_data.foreground,[1,3,4,2])),4);;
+            foreground = any(cell2mat(permute(tsne_data.foreground,[1,3,4,2])),4);
             foreground_img = foreground;
             %crop_green_img;
             Z = round(size(tsne_data.aligned_green_img,3)/2);
@@ -1666,32 +1686,42 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
             tsne_data.foregroundCell = tsne_data.foreground;
         end
         
-        for roiIdx=1:length(tsne_data.foreground)
-            
-            if isfield(tsne_data,'use_space')
-                if tsne_data.use_space{roiIdx}
-                    use_spatial_chkbox.Value = 1;
-                    scale_factor_box.String = 3;
-                else
-                    use_spatial_chkbox.Value = 0;
-                end
-                %else
-                %use_spatial_chkbox.Value = 0;
+        if isfield(tsne_data,'use_space')
+            if tsne_data.use_space{roiIdx}
+                use_spatial_chkbox.Value = 1;
+                scale_factor_box.String = 3;
+            else
+                use_spatial_chkbox.Value = 0;
             end
-            
-            
-            
-            [groups{roiIdx},tsne_precluster{roiIdx}]=CIA_TSNE(double(tsne_data(1).aligned_green_img),tsne_data.foreground{roiIdx},...
-                tsne_data(1).odor_seq,'tsne_iter',max_iter,'use_space',use_spatial_chkbox.Value,...
-                'scale_factor',str2double(scale_factor_box.String));
-            
+            %else
+            %use_spatial_chkbox.Value = 0;
         end
-        
-        [tsne_data.tsne_result, tsne_data.foreground] = merge_tsne_ROIs(groups, tsne_precluster, tsne_data.foreground);
+        if batch
+            for roiIdx=1:length(tsne_data.foreground)
+                
+                
+                
+                [groups{roiIdx},tsne_precluster{roiIdx}]=CIA_TSNE(double(tsne_data(1).aligned_green_img),tsne_data.foreground{roiIdx},...
+                    tsne_data(1).odor_seq,'tsne_iter',max_iter,'use_space',use_spatial_chkbox.Value,...
+                    'scale_factor',str2double(scale_factor_box.String));
+                
+            end
+        else
+            [groups,tsne_precluster]=CIA_TSNE(double(tsne_data(1).aligned_green_img),...
+                tsne_data(1).foreground,...
+                tsne_data(1).odor_seq,...
+                'tsne_iter',max_iter,'use_space',use_spatial_chkbox.Value,...
+                'scale_factor',str2double(scale_factor_box.String));
+        end
+        % merge ROIs from if tSNE was run separately on multiple parts
+        % of the movie.
+        [tsne_data.tsne_result, tsne_data.foreground] = ...
+            merge_tsne_ROIs(groups, tsne_precluster, tsne_data.foreground);
         
         plot(tsne_ax,tsne_data.tsne_result(:,1),...
             tsne_data.tsne_result(:,2),'.')
         tsned=1;
+        %linearlly interpolate the background
         tsne_data.background_level=compute_background(tsne_data.foreground,tsne_data(1).aligned_green_img);
     end
     function run_clustering(varargin)
@@ -1699,24 +1729,17 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
             close(tcourse_fig)
         end
         if tsned
-            Alpha=str2num(alpha_box.String);
-            k=str2num(k_box.String);
+            Alpha=str2double(alpha_box.String);
+            k=str2double(k_box.String);
             tsne_data=CIA_LSBDC(tsne_data,double(tsne_data(1).aligned_green_img),...
                 tsne_data(1).odor_seq,'alpha',Alpha,'k',k);
             
+            %initialize neuronID array
             tsne_data.neuronID=cellfun(@num2str,...
                 num2cell([1:max(tsne_data.labels(:))-1]),'UniformOutput',false);
-            
-            %tsne_data(1).aligned_red_img=aligned_red_img;
-            % tsne_data(1).aligned_green_img=aligned_green_img;
-            
-            %tsne_data.odor_conc_inf=gen_odor_conc_inf(tsne_data(1).filenames{2});
-            %                 if ~isfield(tsne_data,'odor_inf')
-            %                     tsne_data.odor_inf=load('odor_inf.mat');
-            %                 end
-            
+            % tsne_alpha for graying out unselected points
             tsne_alpha=ones(length(unique(tsne_data.labels(tsne_data.labels>1))),1);
-            clustered=1;
+            clustered=1; %flag
             update_cluster_signals;
             plot_tsne_clusters;
             [tcourse_fig,tcourse_ax]=plot_cluster_t_course(tsne_data);
@@ -1973,6 +1996,7 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
         tline_compare=gobjects(length(ax_compare),1);
         ax_compare(1).Units='pixels';
         chkposx=ax_compare(1).Position(1)-80;
+        tsne_data.odor_seq.add_legend;
         for ii=1:length(ax_compare)
             ax_compare(ii).Units='pixels';
             axpos=ax_compare(ii).Position;
@@ -2100,8 +2124,9 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
             if isfield(tsne_data,'which_side')
                 exptID.side = tsne_data.which_side;
             end
-            tsne_data = rmfield(tsne_data,'r');
-            
+            if isfield(tsne_data','r')
+                tsne_data = rmfield(tsne_data,'r');
+            end
             for ii=1:length(tsne_data.nm_signals)
                 tsne_data.r(ii,:) = get_peak_response(tsne_data.odor_seq,tsne_data.t,tsne_data.nm_signals{ii},...
                     exptID,tsne_data.neuronID{ii});
@@ -2314,30 +2339,30 @@ cancel_button=uicontrol('Parent',ID_tab,'Style','pushbutton',...
         
     end
     function MouseMotion(varargin)
-%         1;
-%         show=0;
-% %         if strcmp(tgroup.SelectedTab.Title,'Compare Neurons')
-% %             obj=hittest(gcf);
-% %             if ischar(obj.Type)
-% %                 if strcmp(obj.Type,'patch')
-% %                     1;
-% %                     ax= gca;
-% %                     
-% %                     C = get(gca,'CurrentPoint');
-% %                     pt = C(1,1:2);
-% %                     show=1;
-% %                     xoffset = ax.XLim(2)*.025;
-% %                     yoffset = ax.YLim(2);
-% %                     delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
-% %                     text(pt(1)+xoffset,pt(2)+yoffset,strtrim(obj.Tag),'backgroundcolor',[1 1 .8],'tag','mytooltip','edgecolor',[0 0 0],...
-% %                         'hittest','off');
-% %                 end
-% %             end
-% %             
-% %         end
-% %         if ~show
-%             delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
-%         end
+        1;
+        show=0;
+        if strcmp(tgroup.SelectedTab.Title,'Compare Neurons')
+            obj=hittest(gcf);
+            if ischar(obj.Type)
+                if strcmp(obj.Type,'patch')
+                    1;
+                    ax= gca;
+                    
+                    C = get(gca,'CurrentPoint');
+                    pt = C(1,1:2);
+                    show=1;
+                    xoffset = ax.XLim(2)*.025;
+                    yoffset = ax.YLim(2);
+                    delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
+                    text(pt(1)+xoffset,pt(2)+yoffset,strtrim(obj.Tag),'backgroundcolor',[1 1 .8],'tag','mytooltip','edgecolor',[0 0 0],...
+                        'hittest','off');
+                end
+            end
+            
+        end
+        if ~show
+            delete(findobj(f_tSNE,'tag','mytooltip')); %delete last tool tip
+        end
     end
 %% classifier functions
     function idNeurons(varargin)
