@@ -17,7 +17,7 @@ Yblr = Y;
 parfor t = 1:T
     filt1 = medfilt3(redImg(:,:,:,t));
     Y(:,:,:,t)  = filt1-imgaussfilt3(filt1,[3,3,2]);
-    %Yblr(:,:,:,t) = imgaussfilt3(filt1,[10,10,5]);
+    Yblr(:,:,:,t) = imgaussfilt3(filt1,[10,10,5]);
     %parfor_progress;
 end
 %parfor_progress(0);
@@ -40,8 +40,8 @@ overlaps = 16;
 maxShifts= 10;
 
 options_nr = NoRMCorreSetParms('d1',d1,'d2',d2,'d3',d3,'bin_width',50, ...
-        'grid_size',[32,32,2],'us_fac',10,'max_dev',[4,4,1], ...
-        'overlap_pre',[16,16,1],'overlap_post',[16,16,1],...
+        'grid_size',[round(d1/4),round(d2/4),2],'us_fac',4,'max_dev',[4,4,1], ...
+        'overlap_pre',[round(d1/12),round(d2/12),1],'overlap_post',[4,4,1],...
         'max_shift',[maxShifts,maxShifts,3],'plot_flag',true,...
         'correct_bidir',false,'iter',2);
 
